@@ -36,8 +36,8 @@ https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026
 Use cache-busting links after uploading a new version:
 
 ```text
-https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=victory1
-https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=victory1
+https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=victory2
+https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=victory2
 ```
 
 ## Firebase

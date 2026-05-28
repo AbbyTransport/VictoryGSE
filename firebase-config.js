@@ -1,6 +1,4 @@
-const firebaseProjectId = atob("ZG5sLWFiYnktdHJhbnNwb3J0LXBvcnRhbA==");
-
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBMl4hke6AqJPGch7Y0lTgOOz1dWRq8HDM",
   authDomain: "victorygse-abby-portal.firebaseapp.com",
   projectId: "victorygse-abby-portal",

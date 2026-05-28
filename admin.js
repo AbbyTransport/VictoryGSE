@@ -1,6 +1,6 @@
-import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=victory1";
-import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay } from "./render.js?v=victory1";
-import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=victory1";
+import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=victory2";
+import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay } from "./render.js?v=victory2";
+import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=victory2";
 
 const PAGE_SIZE = 25;
 
