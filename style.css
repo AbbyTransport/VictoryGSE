@@ -2399,7 +2399,7 @@ textarea.cell-input {
   .chat-compose { padding: 14px; }
 }
 
-/* pdf1: chat PDF export button inside chat window */
+/* label1: chat sender labels simplified */
 .chat-header-actions {
   display: flex;
   align-items: center;

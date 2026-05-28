@@ -1,6 +1,6 @@
-import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js?v=pdf1";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=pdf1";
-import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=pdf1";
+import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js?v=label1";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=label1";
+import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=label1";
 
 const PAGE_SIZE = 25;
 
@@ -526,7 +526,7 @@ function downloadChatPdf(load) {
     doc.text("No chat messages have been sent for this load yet.", margin, y);
   } else {
     messages.forEach(message => {
-      const sender = message.sender === "admin" ? "Abby says" : "VictoryGSE says";
+      const sender = message.sender === "admin" ? "Abby" : "VictoryGSE";
       const stamp = formatPdfStamp(message.createdAt);
       const body = String(message.text || "").trim() || "(empty message)";
       const wrapped = doc.splitTextToSize(body, maxWidth - 18);
@@ -601,7 +601,7 @@ function renderChatModal() {
   const rows = messages.length
     ? messages.map(message => {
         const own = message.sender === "client";
-        const label = message.sender === "admin" ? "Abby says" : "VictoryGSE says";
+        const label = message.sender === "admin" ? "Abby" : "VictoryGSE";
         return `<div class="chat-message ${own ? "own" : "other"}">
           <div class="chat-bubble">
             <strong>${escapeHtml(label)}</strong>
