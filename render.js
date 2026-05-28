@@ -13,7 +13,7 @@ export function normalizeStatus(status = "") {
   if (status === "Picked Up") return "Picked Up";
   if (status === "Completed") return "Delivered";
   if (status === "Canceled" || status === "Cancelled") return "Canceled";
-  if (status === "Notice to Abby" || status === "Notice From Abby") return "Submitted";
+  if (status === "Notice to Abby" || status === "Notice to Victory") return "Submitted";
   const allowed = ["Submitted", "Assigned", "Picked Up", "In Transit", "Delivered", "Canceled"];
   return allowed.includes(status) ? status : "Submitted";
 }
@@ -120,17 +120,16 @@ export function statusBadge(status) {
 export function noticeBadges(load = {}, audience = "all") {
   const badges = [];
   const showToAbby = audience === "all" || audience === "admin" || audience === "client";
-  const showFromAbby = audience === "all" || audience === "client" || audience === "admin";
-  const rawStatus = String(load.status || "").trim();
-  const hasNoticeToAbby = load.noticeToAbby === true || load.noticeToAbby === "true" || rawStatus === "Notice to Abby";
-  const hasNoticeFromAbby = load.noticeFromAbby === true || load.noticeFromAbby === "true" || rawStatus === "Notice From Abby";
+  const showToVictory = audience === "all" || audience === "client" || audience === "admin";
+  const hasNoticeToAbby = load.noticeToAbby === true || load.noticeToAbby === "true";
+  const hasNoticeToVictory = load.noticeFromAbby === true || load.noticeFromAbby === "true";
 
   if (showToAbby && hasNoticeToAbby) {
-    badges.push(`<span class="notice-badge notice-to-abby">Notice to Abby</span>`);
+    badges.push(`<button class="notice-badge notice-to-abby" data-notice-action="clearNoticeToAbby" type="button" title="Click to remove this visual notice after review">Notice to Abby</button>`);
   }
 
-  if (showFromAbby && hasNoticeFromAbby) {
-    badges.push(`<span class="notice-badge notice-from-abby">Notice From Abby</span>`);
+  if (showToVictory && hasNoticeToVictory) {
+    badges.push(`<button class="notice-badge notice-to-victory" data-notice-action="clearNoticeToVictory" type="button" title="Click to remove this visual notice after review">Notice to Victory</button>`);
   }
 
   return badges.length ? `<div class="notice-stack">${badges.join("")}</div>` : "";

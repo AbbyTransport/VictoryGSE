@@ -9,7 +9,7 @@ import {
   onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=notice2";
+import { firebaseConfig } from "./firebase-config.js?v=clear1";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

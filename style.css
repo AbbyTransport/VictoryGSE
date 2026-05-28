@@ -1704,7 +1704,7 @@ button, input, select { font: inherit; }
   }
 }
 
-/* notice2: professional customer/admin notification notes workflow */
+/* clear1: professional customer/admin notification notes workflow */
 .notes-textarea,
 .admin-notes-textarea,
 textarea.cell-input {
@@ -1773,7 +1773,7 @@ textarea.cell-input {
   color: #9a3412;
   border-color: #f97316;
 }
-.status-badge.notice-from-abby {
+.status-badge.notice-to-victory {
   background: #dbeafe;
   color: #1d4ed8;
   border-color: #2563eb;
@@ -1782,8 +1782,8 @@ textarea.cell-input {
 .admin-edit-row:has(.status-badge.notice-to-abby) {
   box-shadow: inset 4px 0 0 #f97316;
 }
-.status-row:has(.status-badge.notice-from-abby),
-.admin-edit-row:has(.status-badge.notice-from-abby) {
+.status-row:has(.status-badge.notice-to-victory),
+.admin-edit-row:has(.status-badge.notice-to-victory) {
   box-shadow: inset 4px 0 0 #2563eb;
 }
 
@@ -1884,7 +1884,7 @@ textarea.cell-input {
 }
 
 
-/* notice2 final: notices are communication badges, not shipment statuses */
+/* clear1 final: notices are communication badges, not shipment statuses */
 .notice-stack {
   display: flex;
   flex-direction: column;
@@ -1912,7 +1912,7 @@ textarea.cell-input {
   color: #994600;
   border-color: #f59e0b;
 }
-.notice-badge.notice-from-abby {
+.notice-badge.notice-to-victory {
   background: #e8f0ff;
   color: #1d4ed8;
   border-color: #3b82f6;
@@ -1921,8 +1921,8 @@ textarea.cell-input {
 .admin-edit-row:has(.notice-badge.notice-to-abby) {
   box-shadow: inset 4px 0 0 #f59e0b;
 }
-.status-row:has(.notice-badge.notice-from-abby),
-.admin-edit-row:has(.notice-badge.notice-from-abby) {
+.status-row:has(.notice-badge.notice-to-victory),
+.admin-edit-row:has(.notice-badge.notice-to-victory) {
   box-shadow: inset 4px 0 0 #3b82f6;
 }
 
@@ -2026,4 +2026,151 @@ textarea.cell-input {
   .admin-table th:nth-child(2), .admin-table td:nth-child(2) { width: 8.5%; }
   .admin-table th:nth-child(9), .admin-table td:nth-child(9) { width: 16%; }
   .admin-table th:nth-child(10), .admin-table td:nth-child(10) { width: 7.5%; }
+}
+
+/* clear1: clickable notice badges + cleaner note spacing */
+.notice-stack {
+  gap: 5px;
+  margin-top: 6px;
+}
+.notice-badge {
+  min-height: 24px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9px;
+  border-width: 1px;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.notice-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, .14);
+  filter: saturate(1.08);
+}
+.notice-badge:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+.notice-badge.is-working {
+  opacity: .6;
+  cursor: wait;
+}
+.notice-badge.notice-to-victory {
+  background: #e8f0ff;
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+.status-row:has(.notice-badge.notice-to-victory),
+.admin-edit-row:has(.notice-badge.notice-to-victory) {
+  box-shadow: inset 4px 0 0 #3b82f6;
+}
+
+.notice-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(7, 21, 34, .36);
+  backdrop-filter: blur(4px);
+}
+.notice-confirm-card {
+  width: min(360px, 92vw);
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid #c9d7e8;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #071522;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+}
+.notice-confirm-card strong {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.notice-confirm-card span {
+  color: #4b5f76;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.notice-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.notice-confirm-actions button {
+  min-width: 76px;
+}
+
+.client-note-box,
+.customer-note-preview {
+  gap: 6px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.client-note-box span,
+.customer-note-preview span {
+  font-size: 10.8px;
+  line-height: 1.38;
+  white-space: pre-wrap;
+}
+.note-source-label,
+.customer-note-preview strong {
+  font-size: 9px;
+}
+.admin-note-editor {
+  gap: 8px;
+}
+.admin-table .admin-notes-textarea,
+.admin-notes-textarea,
+textarea.cell-input {
+  min-height: 70px;
+  padding: 8px 9px;
+  font-size: 11px;
+  line-height: 1.38;
+  border-radius: 8px;
+}
+.client-entry-grid .field-notes textarea,
+.notes-textarea {
+  min-height: 74px;
+  padding: 8px 9px;
+  font-size: 11.2px;
+  line-height: 1.38;
+  border-radius: 8px;
+}
+.notify-mini {
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 7px;
+}
+.notice-check-card {
+  padding: 9px 10px;
+  border-radius: 9px;
+}
+.notice-check-card small {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+@media (min-width: 821px) {
+  .client-compact .client-entry-grid .field-notes {
+    grid-column: 9 / span 9;
+    grid-row: 3;
+  }
+  .client-compact .client-entry-grid .field-notify-abby {
+    grid-column: 18 / span 5;
+    grid-row: 3;
+  }
+}
+
+@media (min-width: 1100px) {
+  .admin-table th:nth-child(7), .admin-table td:nth-child(7) { width: 9%; }
+  .admin-table th:nth-child(8), .admin-table td:nth-child(8) { width: 10.5%; }
+  .admin-table th:nth-child(9), .admin-table td:nth-child(9) { width: 18%; }
+  .admin-table th:nth-child(10), .admin-table td:nth-child(10) { width: 6.5%; }
 }

@@ -1,6 +1,6 @@
-import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=notice2";
-import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=notice2";
-import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=notice2";
+import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=clear1";
+import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=clear1";
+import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=clear1";
 
 const PAGE_SIZE = 25;
 
@@ -414,6 +414,12 @@ async function restoreLoad(id) {
 }
 
 list.addEventListener("click", async event => {
+  const noticeButton = event.target.closest("[data-notice-action]");
+  if (noticeButton) {
+    await clearNoticeFromBadge(noticeButton);
+    return;
+  }
+
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   const row = button.closest("tr[data-id]");
@@ -504,6 +510,70 @@ function autoResizeTextarea(textarea) {
 
 function resizeAllTextareas() {
   document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
+}
+
+function showNoticeConfirm(label) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "notice-confirm-overlay";
+    overlay.innerHTML = `
+      <section class="notice-confirm-card" role="dialog" aria-modal="true" aria-label="Remove notice confirmation">
+        <strong>Remove ${escapeHtml(label)}?</strong>
+        <span>This will remove only the visual notice. The notes will stay saved.</span>
+        <div class="notice-confirm-actions">
+          <button class="tiny-primary" type="button" data-confirm="yes">Yes</button>
+          <button class="tiny-btn" type="button" data-confirm="no">No</button>
+        </div>
+      </section>`;
+    document.body.appendChild(overlay);
+
+    const close = answer => {
+      document.removeEventListener("keydown", onKeyDown);
+      overlay.remove();
+      resolve(answer);
+    };
+    const onKeyDown = event => {
+      if (event.key === "Escape") close(false);
+    };
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) close(false);
+      const action = event.target.closest("[data-confirm]")?.dataset.confirm;
+      if (action === "yes") close(true);
+      if (action === "no") close(false);
+    });
+    document.addEventListener("keydown", onKeyDown);
+    overlay.querySelector('[data-confirm="yes"]')?.focus();
+  });
+}
+
+async function clearNoticeFromBadge(button) {
+  const row = button.closest("tr[data-id]");
+  if (!row) return;
+  const id = row.dataset.id;
+  const action = button.dataset.noticeAction;
+  const isToAbby = action === "clearNoticeToAbby";
+  const isToVictory = action === "clearNoticeToVictory";
+  if (!isToAbby && !isToVictory) return;
+
+  const label = isToAbby ? "Notice to Abby" : "Notice to Victory";
+  const ok = await showNoticeConfirm(label);
+  if (!ok) return;
+
+  try {
+    button.disabled = true;
+    button.classList.add("is-working");
+    await updateLoad(id, isToAbby
+      ? { noticeToAbby: false, noticeToAbbyClearedAt: Date.now() }
+      : { noticeFromAbby: false, noticeFromAbbyClearedAt: Date.now() }
+    );
+  } catch (error) {
+    console.error(error);
+    alert("Could not remove this notice. Check Firestore rules and connection.");
+  } finally {
+    button.disabled = false;
+    button.classList.remove("is-working");
+  }
 }
 
 function init() {
