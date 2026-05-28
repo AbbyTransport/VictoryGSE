@@ -13,12 +13,15 @@ export function normalizeStatus(status = "") {
   if (status === "Picked Up") return "Picked Up";
   if (status === "Completed") return "Delivered";
   if (status === "Canceled" || status === "Cancelled") return "Canceled";
-  const allowed = ["Submitted", "Assigned", "Picked Up", "In Transit", "Delivered", "Canceled"];
+  const allowed = ["Submitted", "Assigned", "Picked Up", "In Transit", "Notice to Abby", "Notice From Abby", "Delivered", "Canceled"];
   return allowed.includes(status) ? status : "Submitted";
 }
 
 export function statusClass(status = "") {
-  const s = normalizeStatus(status).toLowerCase();
+  const clean = normalizeStatus(status);
+  const s = clean.toLowerCase();
+  if (clean === "Notice to Abby") return "notice-to-abby";
+  if (clean === "Notice From Abby") return "notice-from-abby";
   if (s.includes("cancel")) return "canceled";
   if (s.includes("deliver")) return "delivered";
   if (s.includes("transit")) return "transit";
@@ -32,6 +35,7 @@ export function statusRank(status = "") {
   if (s.includes("cancel")) return 0;
   if (s.includes("deliver")) return 4;
   if (s.includes("transit")) return 3;
+  if (s.includes("notice")) return 1;
   if (s.includes("picked")) return 2;
   if (s.includes("assigned")) return 1;
   return 0;
@@ -101,6 +105,8 @@ export function loadMatches(load, term) {
     load.customerRate,
     load.approvedInitials,
     load.adminNotes,
+    load.notes,
+    load.noticeToAbbyNote,
     load.clientUpdateNote,
     load.status
   ];
@@ -119,6 +125,8 @@ export function transportUpdate(load) {
   if (status === "Assigned") return load.adminNotes || "Carrier assigned";
   if (status === "Picked Up") return load.adminNotes || "Shipment picked up";
   if (status === "In Transit") return load.adminNotes || "Shipment is in transit";
+  if (status === "Notice to Abby") return load.notes || load.noticeToAbbyNote || "Customer change needs Abby review";
+  if (status === "Notice From Abby") return load.adminNotes || "Abby posted an update";
   if (status === "Delivered") return load.adminNotes || "Shipment delivered";
   if (status === "Canceled") return load.adminNotes || "Shipment canceled";
   return load.adminNotes || "Pending Abby update";
