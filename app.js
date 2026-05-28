@@ -1,6 +1,6 @@
-import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js?v=chat1";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=chat1";
-import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=chat1";
+import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js?v=pdf1";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=pdf1";
+import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=pdf1";
 
 const PAGE_SIZE = 25;
 
@@ -409,6 +409,152 @@ function formatChatStamp(value) {
   return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
+
+function safePdfFilePart(value) {
+  const text = String(value || "load").trim() || "load";
+  return text.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 50) || "load";
+}
+
+function formatPdfStamp(value) {
+  if (!value) return "No timestamp";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No timestamp";
+  return date.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function pdfLoadLabel(load) {
+  return load.tripNumber || load.customerReference || load.id?.slice(0, 8) || "load";
+}
+
+function addPdfLine(doc, text, x, y, maxWidth, lineHeight = 14) {
+  const lines = doc.splitTextToSize(String(text || ""), maxWidth);
+  lines.forEach(line => {
+    doc.text(line, x, y);
+    y += lineHeight;
+  });
+  return y;
+}
+
+function downloadChatPdf(load) {
+  const JsPDF = window.jspdf?.jsPDF;
+  if (!JsPDF) {
+    alert("The PDF library did not load yet. Please refresh the page and try again.");
+    return;
+  }
+
+  const doc = new JsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 46;
+  const maxWidth = pageWidth - margin * 2;
+  let y = 50;
+
+  const addPageIfNeeded = (needed = 24) => {
+    if (y + needed > pageHeight - 48) {
+      doc.addPage();
+      y = 50;
+    }
+  };
+
+  const route = [load.pickupLocation, load.deliveryLocation].filter(Boolean).join(" to ") || "Route not provided";
+  const messages = chatMessages(load);
+  const generatedAt = new Date().toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(20, 32, 51);
+  doc.text("VictoryGSE / Abby Transport Chat", margin, y);
+  y += 22;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Generated: ${generatedAt}`, margin, y);
+  y += 24;
+
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 20;
+
+  const details = [
+    ["Load", pdfLoadLabel(load)],
+    ["Status", normalizeStatus(load.status)],
+    ["Route", route],
+    ["Customer Ref", load.customerReference || "-"],
+    ["Trip #", load.tripNumber || "-"]
+  ];
+
+  doc.setFontSize(10);
+  details.forEach(([label, value]) => {
+    addPageIfNeeded(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(20, 32, 51);
+    doc.text(`${label}:`, margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(51, 65, 85);
+    y = addPdfLine(doc, value, margin + 78, y, maxWidth - 78, 13);
+    y += 5;
+  });
+
+  y += 8;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 24;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(20, 32, 51);
+  doc.text("Conversation History", margin, y);
+  y += 22;
+
+  if (!messages.length) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(100, 116, 139);
+    doc.text("No chat messages have been sent for this load yet.", margin, y);
+  } else {
+    messages.forEach(message => {
+      const sender = message.sender === "admin" ? "Abby says" : "VictoryGSE says";
+      const stamp = formatPdfStamp(message.createdAt);
+      const body = String(message.text || "").trim() || "(empty message)";
+      const wrapped = doc.splitTextToSize(body, maxWidth - 18);
+      const needed = 18 + wrapped.length * 14 + 18;
+      addPageIfNeeded(Math.min(needed, 120));
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(20, 32, 51);
+      doc.text(`${sender} - ${stamp}`, margin, y);
+      y += 16;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10.5);
+      doc.setTextColor(51, 65, 85);
+      wrapped.forEach(line => {
+        addPageIfNeeded(18);
+        doc.text(line, margin + 12, y);
+        y += 14;
+      });
+      y += 12;
+    });
+  }
+
+  const fileName = `VictoryGSE-chat-${safePdfFilePart(pdfLoadLabel(load))}.pdf`;
+  doc.save(fileName);
+}
+
 function chatOverlay() {
   let overlay = document.querySelector("#chatOverlay");
   if (overlay) return overlay;
@@ -420,6 +566,12 @@ function chatOverlay() {
   overlay.addEventListener("click", async event => {
     if (event.target === overlay || event.target.closest("[data-chat-close]")) {
       closeChatModal();
+      return;
+    }
+    const pdfButton = event.target.closest("[data-chat-pdf]");
+    if (pdfButton) {
+      const load = currentLoads.find(item => item.id === activeChatLoadId);
+      if (load) downloadChatPdf(load);
       return;
     }
     const sendButton = event.target.closest("[data-chat-send]");
@@ -467,7 +619,10 @@ function renderChatModal() {
           <strong>Chat to Abby</strong>
           <span>Load ${escapeHtml(load.tripNumber || load.customerReference || load.id.slice(0, 6))}</span>
         </div>
-        <button class="chat-close" type="button" data-chat-close aria-label="Close chat">×</button>
+        <div class="chat-header-actions">
+          <button class="chat-pdf-btn" type="button" data-chat-pdf>Download PDF</button>
+          <button class="chat-close" type="button" data-chat-close aria-label="Close chat">×</button>
+        </div>
       </header>
       <div class="chat-thread">${rows}</div>
       <footer class="chat-compose">
