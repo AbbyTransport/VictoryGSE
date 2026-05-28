@@ -1,6 +1,6 @@
-import { createLoad, updateLoad, listenToLoads } from "./firebase-service.js?v=notice1";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, statusRank, transportUpdate, shortText, formatCurrencyDisplay } from "./render.js?v=notice1";
-import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=notice1";
+import { createLoad, updateLoad, listenToLoads } from "./firebase-service.js?v=victory1";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, statusRank, transportUpdate, shortText, formatCurrencyDisplay } from "./render.js?v=victory1";
+import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=victory1";
 
 const PAGE_SIZE = 25;
 
@@ -18,7 +18,6 @@ const newShipmentBtn = document.querySelector("#newShipmentBtn");
 const closeFormBtn = document.querySelector("#closeFormBtn");
 const saveShipmentBtn = document.querySelector("#saveShipmentBtn");
 const statusEditField = document.querySelector("#statusEditField");
-const notifyAbbyField = document.querySelector("#notifyAbbyField");
 const metricTotalSubmitted = document.querySelector("#metricTotalSubmitted");
 const metricInTransit = document.querySelector("#metricInTransit");
 let currentLoads = [];
@@ -26,12 +25,10 @@ let visibleLimit = PAGE_SIZE;
 let editingLoadId = null;
 const activeProfile = CLIENT_PROFILE;
 const DING_STORAGE_KEY = "abbyTransportClientDingOn";
-const NOTICE_TO_ABBY_STATUS = "Notice to Abby";
 
 const SOUND_STATE = { armed: false, context: null, fallbackAudio: null };
 let firstSnapshotLoaded = false;
 let previousStatusById = new Map();
-let previousAbbyNoticeSignals = new Map();
 
 function makeDingWavDataUri() {
   const sampleRate = 44100;
@@ -143,37 +140,21 @@ function toDateInputValue(value) {
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
-function abbyNoticeSignal(load) {
-  const status = normalizeStatus(load.status);
-  if (status !== "Notice From Abby") return "";
-  const stamp = load.noticeFromAbbyAt || load.updatedAt || "";
-  return `${status}:${stamp}`;
-}
-
 function detectClientNotifications(loads) {
   const nextStatus = new Map(loads.map(load => [load.id, normalizeStatus(load.status)]));
-  const nextAbbyNoticeSignals = new Map(loads.map(load => [load.id, abbyNoticeSignal(load)]));
   if (!firstSnapshotLoaded) {
     previousStatusById = nextStatus;
-    previousAbbyNoticeSignals = nextAbbyNoticeSignals;
     firstSnapshotLoaded = true;
     return;
   }
   let changed = false;
   for (const [id, status] of nextStatus.entries()) {
-    const previousNotice = previousAbbyNoticeSignals.get(id) || "";
-    const nextNotice = nextAbbyNoticeSignals.get(id) || "";
     if (previousStatusById.has(id) && previousStatusById.get(id) !== status) {
-      changed = true;
-      break;
-    }
-    if (nextNotice && nextNotice !== previousNotice) {
       changed = true;
       break;
     }
   }
   previousStatusById = nextStatus;
-  previousAbbyNoticeSignals = nextAbbyNoticeSignals;
   if (changed) playComfortDing("status");
 }
 
@@ -186,21 +167,18 @@ function equipmentToText(formElement) {
 
 function formToObject(formElement) {
   const data = Object.fromEntries(new FormData(formElement).entries());
-  const shouldNotifyAbby = formElement.elements.notifyAbby?.checked === true;
-
   delete data.equipmentOptions;
   delete data.equipmentOther;
-  delete data.notifyAbby;
 
-  data.equipment = equipmentToText(formElement);
-
-  if (editingLoadId && shouldNotifyAbby) {
-    data.status = NOTICE_TO_ABBY_STATUS;
-    data.noticeToAbby = true;
-    data.noticeToAbbyAt = Date.now();
-    data.noticeToAbbyNote = data.notes || "";
+  if (editingLoadId) {
+    const editingRow = [...list.querySelectorAll("tr[data-id]")].find(row => row.dataset.id === editingLoadId);
+    const noteInput = editingRow?.querySelector(".client-update-note-input");
+    if (noteInput) data.clientUpdateNote = noteInput.value;
+  } else {
+    delete data.clientUpdateNote;
   }
 
+  data.equipment = equipmentToText(formElement);
   return data;
 }
 
@@ -253,13 +231,10 @@ function resetVisibleLimit() {
 function setFormMode(mode = "create") {
   const editing = mode === "edit";
   saveShipmentBtn.textContent = editing ? "Save Changes" : "Save Shipment";
-  message.textContent = editing ? "Editing existing shipment request. Mark Notify Abby when this change needs review." : "";
+  message.textContent = editing ? "Editing existing shipment request. You may update the status before saving." : "";
   message.className = "form-message";
   if (statusEditField) statusEditField.classList.toggle("hidden-panel", !editing);
-  if (notifyAbbyField) notifyAbbyField.classList.toggle("hidden-panel", !editing);
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
   if (!editing && form.elements.status) form.elements.status.value = "Submitted";
-  resizeAllTextareas();
 }
 
 function openBlankForm() {
@@ -305,8 +280,6 @@ function openEditForm(load) {
     else input.value = load[field] || "";
   }
   setEquipmentControls(load.equipment || "");
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
-  resizeAllTextareas();
   renderClientLoads();
 
   form.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -351,8 +324,6 @@ function openDuplicateForm(load) {
   }
 
   setEquipmentControls(load.equipment || "");
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
-  resizeAllTextareas();
 
   formPanel.classList.remove("hidden-panel");
   message.textContent = "Duplicated from an existing shipment. Review and click Save Shipment to create a new entry.";
@@ -392,15 +363,18 @@ function clientRow(load) {
     <td title="${escapeHtml(load.commodity || "")}">${escapeHtml(shortText(load.commodity, 36))}<br><span class="subcell">${escapeHtml(load.weight || "")}${load.equipment ? ` / ${escapeHtml(load.equipment)}` : ""}</span></td>
     <td><strong>${escapeHtml(formatCurrencyDisplay(load.customerRate) || "—")}</strong><br><span class="subcell">${escapeHtml(load.approvedInitials ? `Approved: ${load.approvedInitials}` : "Approval pending")}</span></td>
     <td title="${escapeHtml(carrierDriver)}">${escapeHtml(shortText(carrierDriver, 40))}</td>
-    <td class="abby-update-cell" title="${escapeHtml(load.adminNotes || "")}">
+    <td class="abby-update-cell" title="${escapeHtml(load.clientUpdateNote || "")}">
       ${clientUpdateNoteBox(load)}
     </td>
   </tr>`;
 }
 
 function clientUpdateNoteBox(load) {
-  const note = load.adminNotes || "";
-  return `<div class="client-note-box standalone-abby-note">${escapeHtml(shortText(note, 120))}</div>`;
+  const isEditing = editingLoadId === load.id;
+  if (isEditing) {
+    return `<textarea class="client-update-note-input inline-abby-update-note" data-note-input="true" rows="3" placeholder="Type Abby Update note...">${escapeHtml(load.clientUpdateNote || "")}</textarea>`;
+  }
+  return `<div class="client-note-box standalone-abby-note">${escapeHtml(shortText(load.clientUpdateNote || "", 95))}</div>`;
 }
 
 function renderClientLoads() {
@@ -449,20 +423,6 @@ form.addEventListener("submit", async event => {
     message.textContent = "Could not save. Check Firebase rules.";
     message.className = "form-message error";
   }
-});
-
-function autoResizeTextarea(textarea) {
-  if (!textarea) return;
-  textarea.style.height = "auto";
-  textarea.style.height = `${Math.max(textarea.scrollHeight, 54)}px`;
-}
-
-function resizeAllTextareas() {
-  document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
-}
-
-form.addEventListener("input", event => {
-  if (event.target.matches("textarea.autoresize")) autoResizeTextarea(event.target);
 });
 
 function formatPhoneTyping(value) {
