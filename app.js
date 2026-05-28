@@ -1,6 +1,6 @@
-import { createLoad, updateLoad, listenToLoads } from "./firebase-service.js?v=clear1";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, statusRank, transportUpdate, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=clear1";
-import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=clear1";
+import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js?v=chat1";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=chat1";
+import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=chat1";
 
 const PAGE_SIZE = 25;
 
@@ -17,7 +17,6 @@ const enableDingBtn = document.querySelector("#enableDingBtn");
 const newShipmentBtn = document.querySelector("#newShipmentBtn");
 const closeFormBtn = document.querySelector("#closeFormBtn");
 const saveShipmentBtn = document.querySelector("#saveShipmentBtn");
-const notifyAbbyField = document.querySelector("#notifyAbbyField");
 const metricTotalSubmitted = document.querySelector("#metricTotalSubmitted");
 const metricInTransit = document.querySelector("#metricInTransit");
 let currentLoads = [];
@@ -29,7 +28,8 @@ const DING_STORAGE_KEY = "abbyTransportClientDingOn";
 const SOUND_STATE = { armed: false, context: null, fallbackAudio: null };
 let firstSnapshotLoaded = false;
 let previousStatusById = new Map();
-let previousAbbyNoticeSignals = new Map();
+let previousChatSignals = new Map();
+let activeChatLoadId = null;
 
 function makeDingWavDataUri() {
   const sampleRate = 44100;
@@ -141,36 +141,35 @@ function toDateInputValue(value) {
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
-function abbyNoticeSignal(load) {
-  if (!(load.noticeFromAbby === true || load.noticeFromAbby === "true")) return "";
-  const stamp = load.noticeFromAbbyAt || load.updatedAt || "";
-  return `Notice to Victory:${stamp}`;
+function chatUnreadSignal(load) {
+  if (!(load.chatUnreadForClient === true || load.chatUnreadForClient === "true")) return "";
+  return `chat:${load.chatLastMessageAt || load.updatedAt || ""}`;
 }
 
 function detectClientNotifications(loads) {
   const nextStatus = new Map(loads.map(load => [load.id, normalizeStatus(load.status)]));
-  const nextAbbyNoticeSignals = new Map(loads.map(load => [load.id, abbyNoticeSignal(load)]));
+  const nextChatSignals = new Map(loads.map(load => [load.id, chatUnreadSignal(load)]));
   if (!firstSnapshotLoaded) {
     previousStatusById = nextStatus;
-    previousAbbyNoticeSignals = nextAbbyNoticeSignals;
+    previousChatSignals = nextChatSignals;
     firstSnapshotLoaded = true;
     return;
   }
   let changed = false;
   for (const [id, status] of nextStatus.entries()) {
-    const previousNotice = previousAbbyNoticeSignals.get(id) || "";
-    const nextNotice = nextAbbyNoticeSignals.get(id) || "";
+    const previousChat = previousChatSignals.get(id) || "";
+    const nextChat = nextChatSignals.get(id) || "";
     if (previousStatusById.has(id) && previousStatusById.get(id) !== status) {
       changed = true;
       break;
     }
-    if (nextNotice && nextNotice !== previousNotice) {
+    if (nextChat && nextChat !== previousChat) {
       changed = true;
       break;
     }
   }
   previousStatusById = nextStatus;
-  previousAbbyNoticeSignals = nextAbbyNoticeSignals;
+  previousChatSignals = nextChatSignals;
   if (changed) playComfortDing("status");
 }
 
@@ -183,20 +182,12 @@ function equipmentToText(formElement) {
 
 function formToObject(formElement) {
   const data = Object.fromEntries(new FormData(formElement).entries());
-  const shouldNotifyAbby = formElement.elements.notifyAbby?.checked === true;
 
   delete data.equipmentOptions;
   delete data.equipmentOther;
   delete data.notifyAbby;
 
   data.equipment = equipmentToText(formElement);
-
-  if (editingLoadId && shouldNotifyAbby) {
-    data.noticeToAbby = true;
-    data.noticeToAbbyAt = Date.now();
-    data.noticeToAbbyNote = data.notes || "";
-  }
-
   return data;
 }
 
@@ -249,10 +240,8 @@ function resetVisibleLimit() {
 function setFormMode(mode = "create") {
   const editing = mode === "edit";
   saveShipmentBtn.textContent = editing ? "Save Changes" : "Save Shipment";
-  message.textContent = editing ? "Editing existing shipment request. Mark Notify Abby when this change needs review." : "";
+  message.textContent = editing ? "Editing existing shipment request." : "";
   message.className = "form-message";
-  if (notifyAbbyField) notifyAbbyField.classList.toggle("hidden-panel", !editing);
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
   resizeAllTextareas();
 }
 
@@ -298,7 +287,6 @@ function openEditForm(load) {
     else input.value = load[field] || "";
   }
   setEquipmentControls(load.equipment || "");
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
   resizeAllTextareas();
   renderClientLoads();
 
@@ -344,7 +332,6 @@ function openDuplicateForm(load) {
   }
 
   setEquipmentControls(load.equipment || "");
-  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
   resizeAllTextareas();
 
   formPanel.classList.remove("hidden-panel");
@@ -369,7 +356,6 @@ function historyDateTime(date, time) {
 function clientRow(load) {
   const status = normalizeStatus(load.status || "Submitted");
   const isCanceled = status === "Canceled";
-  const progress = Math.min(100, Math.round((statusRank(status) / 4) * 100));
   const carrierDriver = [load.carrier, load.driverName, load.driverPhone].filter(Boolean).join(" / ") || "Pending";
   const editControl = isCanceled
     ? `<span class="cancel-locked" title="Canceled loads cannot be edited from the client portal.">Locked</span>`
@@ -377,7 +363,7 @@ function clientRow(load) {
        <button class="mini-copy" data-action="copy" type="button">Copy to New Load</button>`;
   return `<tr class="status-row ${status === "Delivered" ? "row-complete" : ""} ${isCanceled ? "row-canceled" : ""}" data-id="${escapeHtml(load.id)}">
     <td class="edit-cell">${editControl}</td>
-    <td>${statusBadge(status)}${noticeBadges(load, "client")}<div class="progress-line"><span style="width:${progress}%"></span></div></td>
+    <td>${statusBadge(status)}${chatButton(load, "client")}</td>
     <td title="${escapeHtml(load.customerReference || "")}">${escapeHtml(shortText(load.customerReference || "—", 24))}</td>
     <td><strong>${escapeHtml(load.tripNumber || "Pending")}</strong></td>
     <td title="${escapeHtml(load.pickupLocation || "")}"><strong class="history-date-time">${historyDateTime(load.pickupDate, load.pickupTime)}</strong><br>${escapeHtml(shortText(load.pickupLocation, 42))}</td>
@@ -393,8 +379,7 @@ function clientRow(load) {
 
 function clientUpdateNoteBox(load) {
   const note = load.adminNotes || "";
-  const hasNotice = load.noticeFromAbby === true || load.noticeFromAbby === "true";
-  const label = hasNotice ? `<strong class="note-source-label">Notice to Victory</strong>` : `<strong class="note-source-label muted-label">Abby Notes</strong>`;
+  const label = `<strong class="note-source-label muted-label">Abby Notes</strong>`;
   return `<div class="client-note-box standalone-abby-note">${label}<span>${escapeHtml(shortText(note || "No Abby notes yet", 140))}</span></div>`;
 }
 
@@ -410,6 +395,137 @@ function renderClientLoads() {
   const shown = Math.min(visible.length, filtered.length);
   showingCount.textContent = `Showing ${shown} of ${filtered.length} shipments`;
   loadMoreBtn.hidden = filtered.length <= visibleLimit;
+}
+
+
+function chatMessages(load) {
+  return Array.isArray(load?.chatMessages) ? [...load.chatMessages].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) : [];
+}
+
+function formatChatStamp(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function chatOverlay() {
+  let overlay = document.querySelector("#chatOverlay");
+  if (overlay) return overlay;
+  overlay = document.createElement("div");
+  overlay.id = "chatOverlay";
+  overlay.className = "chat-overlay hidden-panel";
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("click", async event => {
+    if (event.target === overlay || event.target.closest("[data-chat-close]")) {
+      closeChatModal();
+      return;
+    }
+    const sendButton = event.target.closest("[data-chat-send]");
+    if (!sendButton) return;
+    await sendChatMessage(sendButton);
+  });
+
+  overlay.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeChatModal();
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      const sendButton = overlay.querySelector("[data-chat-send]");
+      if (sendButton) sendChatMessage(sendButton);
+    }
+  });
+  return overlay;
+}
+
+function renderChatModal() {
+  const overlay = chatOverlay();
+  const load = currentLoads.find(item => item.id === activeChatLoadId);
+  if (!load) {
+    overlay.innerHTML = "";
+    overlay.classList.add("hidden-panel");
+    return;
+  }
+  const messages = chatMessages(load);
+  const rows = messages.length
+    ? messages.map(message => {
+        const own = message.sender === "client";
+        const label = message.sender === "admin" ? "Abby says" : "VictoryGSE says";
+        return `<div class="chat-message ${own ? "own" : "other"}">
+          <div class="chat-bubble">
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(message.text)}</p>
+            <span>${escapeHtml(formatChatStamp(message.createdAt))}</span>
+          </div>
+        </div>`;
+      }).join("")
+    : `<div class="chat-empty">No chat messages yet. Start the conversation with Abby for this load.</div>`;
+
+  overlay.innerHTML = `
+    <section class="chat-card" role="dialog" aria-modal="true" aria-label="Chat to Abby">
+      <header class="chat-header">
+        <div>
+          <strong>Chat to Abby</strong>
+          <span>Load ${escapeHtml(load.tripNumber || load.customerReference || load.id.slice(0, 6))}</span>
+        </div>
+        <button class="chat-close" type="button" data-chat-close aria-label="Close chat">×</button>
+      </header>
+      <div class="chat-thread">${rows}</div>
+      <footer class="chat-compose">
+        <textarea id="chatMessageText" rows="3" placeholder="Type a message to Abby..."></textarea>
+        <div class="chat-compose-actions">
+          <span>Ctrl + Enter sends</span>
+          <button class="tiny-primary" type="button" data-chat-send>Send</button>
+        </div>
+      </footer>
+    </section>`;
+  overlay.classList.remove("hidden-panel");
+  const thread = overlay.querySelector(".chat-thread");
+  if (thread) thread.scrollTop = thread.scrollHeight;
+  overlay.querySelector("#chatMessageText")?.focus();
+}
+
+async function openChatForLoad(load) {
+  activeChatLoadId = load.id;
+  renderChatModal();
+  if (load.chatUnreadForClient === true || load.chatUnreadForClient === "true") {
+    load.chatUnreadForClient = false;
+    renderClientLoads();
+    try { await markChatRead(load.id, "client"); } catch (error) { console.error(error); }
+  }
+}
+
+function closeChatModal() {
+  activeChatLoadId = null;
+  chatOverlay().classList.add("hidden-panel");
+}
+
+async function sendChatMessage(button) {
+  const overlay = chatOverlay();
+  const textarea = overlay.querySelector("#chatMessageText");
+  const text = textarea?.value?.trim() || "";
+  if (!activeChatLoadId || !text) return;
+  try {
+    button.disabled = true;
+    const sent = await appendChatMessage(activeChatLoadId, {
+      sender: "client",
+      senderName: "VictoryGSE",
+      text
+    });
+    const load = currentLoads.find(item => item.id === activeChatLoadId);
+    if (load) {
+      load.chatMessages = [...chatMessages(load), sent];
+      load.chatUnreadForClient = false;
+      load.chatUnreadForAdmin = true;
+      load.chatLastSender = "client";
+      load.chatLastMessageAt = sent.createdAt;
+    }
+    renderChatModal();
+  } catch (error) {
+    console.error(error);
+    alert("Could not send this chat message. Check Firestore rules and connection.");
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function init() {
@@ -454,70 +570,6 @@ function autoResizeTextarea(textarea) {
 
 function resizeAllTextareas() {
   document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
-}
-
-function showNoticeConfirm(label) {
-  return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "notice-confirm-overlay";
-    overlay.innerHTML = `
-      <section class="notice-confirm-card" role="dialog" aria-modal="true" aria-label="Remove notice confirmation">
-        <strong>Remove ${escapeHtml(label)}?</strong>
-        <span>This will remove only the visual notice. The notes will stay saved.</span>
-        <div class="notice-confirm-actions">
-          <button class="tiny-primary" type="button" data-confirm="yes">Yes</button>
-          <button class="tiny-btn" type="button" data-confirm="no">No</button>
-        </div>
-      </section>`;
-    document.body.appendChild(overlay);
-
-    const close = answer => {
-      document.removeEventListener("keydown", onKeyDown);
-      overlay.remove();
-      resolve(answer);
-    };
-    const onKeyDown = event => {
-      if (event.key === "Escape") close(false);
-    };
-
-    overlay.addEventListener("click", event => {
-      if (event.target === overlay) close(false);
-      const action = event.target.closest("[data-confirm]")?.dataset.confirm;
-      if (action === "yes") close(true);
-      if (action === "no") close(false);
-    });
-    document.addEventListener("keydown", onKeyDown);
-    overlay.querySelector('[data-confirm="yes"]')?.focus();
-  });
-}
-
-async function clearNoticeFromBadge(button) {
-  const row = button.closest("tr[data-id]");
-  if (!row) return;
-  const id = row.dataset.id;
-  const action = button.dataset.noticeAction;
-  const isToAbby = action === "clearNoticeToAbby";
-  const isToVictory = action === "clearNoticeToVictory";
-  if (!isToAbby && !isToVictory) return;
-
-  const label = isToAbby ? "Notice to Abby" : "Notice to Victory";
-  const ok = await showNoticeConfirm(label);
-  if (!ok) return;
-
-  try {
-    button.disabled = true;
-    button.classList.add("is-working");
-    await updateLoad(id, isToAbby
-      ? { noticeToAbby: false, noticeToAbbyClearedAt: Date.now() }
-      : { noticeFromAbby: false, noticeFromAbbyClearedAt: Date.now() }
-    );
-  } catch (error) {
-    console.error(error);
-    alert("Could not remove this notice. Check Firestore rules and connection.");
-  } finally {
-    button.disabled = false;
-    button.classList.remove("is-working");
-  }
 }
 
 form.addEventListener("input", event => {
@@ -602,12 +654,6 @@ form.querySelectorAll(".phone-text").forEach(input => {
 form.querySelectorAll(".currency-input").forEach(setupCurrencyInput);
 
 list.addEventListener("click", async event => {
-  const noticeButton = event.target.closest("[data-notice-action]");
-  if (noticeButton) {
-    await clearNoticeFromBadge(noticeButton);
-    return;
-  }
-
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   const row = button.closest("tr[data-id]");
@@ -615,6 +661,11 @@ list.addEventListener("click", async event => {
   const id = row.dataset.id;
   const load = currentLoads.find(item => item.id === id);
   if (!load) return;
+
+  if (button.dataset.action === "openChat") {
+    await openChatForLoad(load);
+    return;
+  }
 
   if (button.dataset.action === "edit") {
     openEditForm(load);

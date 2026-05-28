@@ -1,6 +1,6 @@
-import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=clear1";
-import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=clear1";
-import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=clear1";
+import { listenToLoads, updateLoad, removeLoad, appendChatMessage, markChatRead } from "./firebase-service.js?v=chat1";
+import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, chatButton } from "./render.js?v=chat1";
+import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=chat1";
 
 const PAGE_SIZE = 25;
 
@@ -20,7 +20,8 @@ const DING_STORAGE_KEY = "abbyTransportAdminDingOn";
 const SOUND_STATE = { armed: false, context: null, fallbackAudio: null };
 let firstSnapshotLoaded = false;
 let knownLoadIds = new Set();
-let knownNoticeSignals = new Map();
+let knownChatSignals = new Map();
+let activeChatLoadId = null;
 
 function makeDingWavDataUri() {
   const sampleRate = 44100;
@@ -121,18 +122,17 @@ function playComfortDing() {
   }
 }
 
-function notificationSignal(load) {
-  if (!(load.noticeToAbby === true || load.noticeToAbby === "true")) return "";
-  const stamp = load.noticeToAbbyAt || load.updatedAt || load.clientUpdatedAt || "";
-  return `Notice to Abby:${stamp}`;
+function chatUnreadSignal(load) {
+  if (!(load.chatUnreadForAdmin === true || load.chatUnreadForAdmin === "true")) return "";
+  return `chat:${load.chatLastMessageAt || load.updatedAt || load.clientUpdatedAt || ""}`;
 }
 
 function detectAdminNotifications(loads) {
   const nextIds = new Set(loads.map(load => load.id));
-  const nextNoticeSignals = new Map(loads.map(load => [load.id, notificationSignal(load)]));
+  const nextChatSignals = new Map(loads.map(load => [load.id, chatUnreadSignal(load)]));
   if (!firstSnapshotLoaded) {
     knownLoadIds = nextIds;
-    knownNoticeSignals = nextNoticeSignals;
+    knownChatSignals = nextChatSignals;
     firstSnapshotLoaded = true;
     return;
   }
@@ -142,15 +142,15 @@ function detectAdminNotifications(loads) {
       shouldDing = true;
       break;
     }
-    const previousSignal = knownNoticeSignals.get(id) || "";
-    const nextSignal = nextNoticeSignals.get(id) || "";
+    const previousSignal = knownChatSignals.get(id) || "";
+    const nextSignal = nextChatSignals.get(id) || "";
     if (nextSignal && nextSignal !== previousSignal) {
       shouldDing = true;
       break;
     }
   }
   knownLoadIds = nextIds;
-  knownNoticeSignals = nextNoticeSignals;
+  knownChatSignals = nextChatSignals;
   if (shouldDing) playComfortDing();
 }
 
@@ -286,7 +286,7 @@ function adminRow(load, index) {
     <td class="admin-status-cell">
       <select name="status" class="cell-input status-input">${statusOptions(status)}</select>
       ${statusBadge(status)}
-      ${noticeBadges(load, "admin")}
+      ${chatButton(load, "admin")}
     </td>
     <td class="admin-trip-cell">
       <input name="tripNumber" class="cell-input trip-input" value="${valueAttr(load.tripNumber)}" placeholder="Trip #" />
@@ -322,12 +322,11 @@ function adminRow(load, index) {
     </td>
     <td class="admin-notes-cell">
       <div class="admin-note-editor">
-        <div class="customer-note-preview" title="${escapeHtml(load.notes || load.noticeToAbbyNote || "")}">
+        <div class="customer-note-preview" title="${escapeHtml(load.notes || "")}">
           <strong>Victory Notes</strong>
-          <span>${escapeHtml(shortText(load.notes || load.noticeToAbbyNote || "No customer notes", 110))}</span>
+          <span>${escapeHtml(shortText(load.notes || "No customer notes", 110))}</span>
         </div>
-        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2" placeholder="Notes visible to VictoryGSE">${escapeHtml(load.adminNotes || "")}</textarea>
-        <label class="notify-mini"><input name="notifyVictoryGSE" type="checkbox" value="yes" /> <span>Notify VictoryGSE</span></label>
+        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2" placeholder="Status notes visible to VictoryGSE">${escapeHtml(load.adminNotes || "")}</textarea>
       </div>
     </td>
     <td class="action-cell compact-action-cell">
@@ -362,14 +361,7 @@ function collectRowPayload(row) {
   const originalLoad = currentLoads.find(load => load.id === row.dataset.id);
   const originalStatus = normalizeStatus(originalLoad?.status || "Submitted");
   const selectedStatus = normalizeStatus(payload.status || originalStatus);
-  const shouldNotifyVictory = payload.notifyVictoryGSE === true;
-
   delete payload.notifyVictoryGSE;
-
-  if (shouldNotifyVictory) {
-    payload.noticeFromAbby = true;
-    payload.noticeFromAbbyAt = Date.now();
-  }
 
   // If a carrier is added while the load is still Submitted, move it to Assigned.
   // Picked Up is only set when the Picked Up button/status is used.
@@ -414,17 +406,17 @@ async function restoreLoad(id) {
 }
 
 list.addEventListener("click", async event => {
-  const noticeButton = event.target.closest("[data-notice-action]");
-  if (noticeButton) {
-    await clearNoticeFromBadge(noticeButton);
-    return;
-  }
-
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   const row = button.closest("tr[data-id]");
   const id = row.dataset.id;
   const action = button.dataset.action;
+  const load = currentLoads.find(item => item.id === id);
+
+  if (action === "openChat" && load) {
+    await openChatForLoad(load);
+    return;
+  }
 
   try {
     button.disabled = true;
@@ -512,67 +504,133 @@ function resizeAllTextareas() {
   document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
 }
 
-function showNoticeConfirm(label) {
-  return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "notice-confirm-overlay";
-    overlay.innerHTML = `
-      <section class="notice-confirm-card" role="dialog" aria-modal="true" aria-label="Remove notice confirmation">
-        <strong>Remove ${escapeHtml(label)}?</strong>
-        <span>This will remove only the visual notice. The notes will stay saved.</span>
-        <div class="notice-confirm-actions">
-          <button class="tiny-primary" type="button" data-confirm="yes">Yes</button>
-          <button class="tiny-btn" type="button" data-confirm="no">No</button>
-        </div>
-      </section>`;
-    document.body.appendChild(overlay);
-
-    const close = answer => {
-      document.removeEventListener("keydown", onKeyDown);
-      overlay.remove();
-      resolve(answer);
-    };
-    const onKeyDown = event => {
-      if (event.key === "Escape") close(false);
-    };
-
-    overlay.addEventListener("click", event => {
-      if (event.target === overlay) close(false);
-      const action = event.target.closest("[data-confirm]")?.dataset.confirm;
-      if (action === "yes") close(true);
-      if (action === "no") close(false);
-    });
-    document.addEventListener("keydown", onKeyDown);
-    overlay.querySelector('[data-confirm="yes"]')?.focus();
-  });
+function chatMessages(load) {
+  return Array.isArray(load?.chatMessages) ? [...load.chatMessages].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)) : [];
 }
 
-async function clearNoticeFromBadge(button) {
-  const row = button.closest("tr[data-id]");
-  if (!row) return;
-  const id = row.dataset.id;
-  const action = button.dataset.noticeAction;
-  const isToAbby = action === "clearNoticeToAbby";
-  const isToVictory = action === "clearNoticeToVictory";
-  if (!isToAbby && !isToVictory) return;
+function formatChatStamp(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
-  const label = isToAbby ? "Notice to Abby" : "Notice to Victory";
-  const ok = await showNoticeConfirm(label);
-  if (!ok) return;
+function chatOverlay() {
+  let overlay = document.querySelector("#chatOverlay");
+  if (overlay) return overlay;
+  overlay = document.createElement("div");
+  overlay.id = "chatOverlay";
+  overlay.className = "chat-overlay hidden-panel";
+  document.body.appendChild(overlay);
 
+  overlay.addEventListener("click", async event => {
+    if (event.target === overlay || event.target.closest("[data-chat-close]")) {
+      closeChatModal();
+      return;
+    }
+    const sendButton = event.target.closest("[data-chat-send]");
+    if (!sendButton) return;
+    await sendChatMessage(sendButton);
+  });
+
+  overlay.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeChatModal();
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      const sendButton = overlay.querySelector("[data-chat-send]");
+      if (sendButton) sendChatMessage(sendButton);
+    }
+  });
+  return overlay;
+}
+
+function renderChatModal() {
+  const overlay = chatOverlay();
+  const load = currentLoads.find(item => item.id === activeChatLoadId);
+  if (!load) {
+    overlay.innerHTML = "";
+    overlay.classList.add("hidden-panel");
+    return;
+  }
+  const messages = chatMessages(load);
+  const rows = messages.length
+    ? messages.map(message => {
+        const own = message.sender === "admin";
+        const label = message.sender === "admin" ? "Abby says" : "VictoryGSE says";
+        return `<div class="chat-message ${own ? "own" : "other"}">
+          <div class="chat-bubble">
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(message.text)}</p>
+            <span>${escapeHtml(formatChatStamp(message.createdAt))}</span>
+          </div>
+        </div>`;
+      }).join("")
+    : `<div class="chat-empty">No chat messages yet. Start the conversation with VictoryGSE for this load.</div>`;
+
+  overlay.innerHTML = `
+    <section class="chat-card" role="dialog" aria-modal="true" aria-label="Chat to VictoryGSE">
+      <header class="chat-header">
+        <div>
+          <strong>Chat to VictoryGSE</strong>
+          <span>Load ${escapeHtml(load.tripNumber || load.customerReference || load.id.slice(0, 6))}</span>
+        </div>
+        <button class="chat-close" type="button" data-chat-close aria-label="Close chat">×</button>
+      </header>
+      <div class="chat-thread">${rows}</div>
+      <footer class="chat-compose">
+        <textarea id="chatMessageText" rows="3" placeholder="Type a message to VictoryGSE..."></textarea>
+        <div class="chat-compose-actions">
+          <span>Ctrl + Enter sends</span>
+          <button class="tiny-primary" type="button" data-chat-send>Send</button>
+        </div>
+      </footer>
+    </section>`;
+  overlay.classList.remove("hidden-panel");
+  const thread = overlay.querySelector(".chat-thread");
+  if (thread) thread.scrollTop = thread.scrollHeight;
+  overlay.querySelector("#chatMessageText")?.focus();
+}
+
+async function openChatForLoad(load) {
+  activeChatLoadId = load.id;
+  renderChatModal();
+  if (load.chatUnreadForAdmin === true || load.chatUnreadForAdmin === "true") {
+    load.chatUnreadForAdmin = false;
+    renderAdminLoads();
+    try { await markChatRead(load.id, "admin"); } catch (error) { console.error(error); }
+  }
+}
+
+function closeChatModal() {
+  activeChatLoadId = null;
+  chatOverlay().classList.add("hidden-panel");
+}
+
+async function sendChatMessage(button) {
+  const overlay = chatOverlay();
+  const textarea = overlay.querySelector("#chatMessageText");
+  const text = textarea?.value?.trim() || "";
+  if (!activeChatLoadId || !text) return;
   try {
     button.disabled = true;
-    button.classList.add("is-working");
-    await updateLoad(id, isToAbby
-      ? { noticeToAbby: false, noticeToAbbyClearedAt: Date.now() }
-      : { noticeFromAbby: false, noticeFromAbbyClearedAt: Date.now() }
-    );
+    const sent = await appendChatMessage(activeChatLoadId, {
+      sender: "admin",
+      senderName: "Abby",
+      text
+    });
+    const load = currentLoads.find(item => item.id === activeChatLoadId);
+    if (load) {
+      load.chatMessages = [...chatMessages(load), sent];
+      load.chatUnreadForAdmin = false;
+      load.chatUnreadForClient = true;
+      load.chatLastSender = "admin";
+      load.chatLastMessageAt = sent.createdAt;
+    }
+    renderChatModal();
   } catch (error) {
     console.error(error);
-    alert("Could not remove this notice. Check Firestore rules and connection.");
+    alert("Could not send this chat message. Check Firestore rules and connection.");
   } finally {
     button.disabled = false;
-    button.classList.remove("is-working");
   }
 }
 

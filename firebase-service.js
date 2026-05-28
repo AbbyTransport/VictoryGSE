@@ -7,9 +7,10 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=clear1";
+import { firebaseConfig } from "./firebase-config.js?v=chat1";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
@@ -60,9 +61,11 @@ export async function createLoad(payload, profile) {
     actualDeliveryDate: "",
     actualDeliveryTime: "",
     adminNotes: "",
-    noticeToAbby: false,
-    noticeFromAbby: false,
-    noticeToAbbyNote: "",
+    chatMessages: [],
+    chatLastMessageAt: 0,
+    chatLastSender: "",
+    chatUnreadForAdmin: false,
+    chatUnreadForClient: false,
     createdAt: serverTimestamp(),
     clientCreatedAt: Date.now(),
     updatedAt: serverTimestamp()
@@ -75,6 +78,43 @@ export async function updateLoad(id, payload) {
   const cleanPayload = Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined));
   return updateDoc(doc(db, "load_requests", id), {
     ...cleanPayload,
+    updatedAt: serverTimestamp()
+  });
+}
+
+
+
+export async function appendChatMessage(id, { sender, senderName, text }) {
+  const cleanText = String(text || "").trim();
+  if (!cleanText) throw new Error("Chat message cannot be empty.");
+
+  const message = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    sender,
+    senderName,
+    text: cleanText,
+    createdAt: Date.now()
+  };
+
+  await updateDoc(doc(db, "load_requests", id), {
+    chatMessages: arrayUnion(message),
+    chatLastMessageAt: message.createdAt,
+    chatLastSender: sender,
+    chatUnreadForAdmin: sender !== "admin",
+    chatUnreadForClient: sender !== "client",
+    updatedAt: serverTimestamp()
+  });
+
+  return message;
+}
+
+export async function markChatRead(id, audience) {
+  const payload = audience === "admin"
+    ? { chatUnreadForAdmin: false, chatReadByAdminAt: Date.now() }
+    : { chatUnreadForClient: false, chatReadByClientAt: Date.now() };
+
+  return updateDoc(doc(db, "load_requests", id), {
+    ...payload,
     updatedAt: serverTimestamp()
   });
 }

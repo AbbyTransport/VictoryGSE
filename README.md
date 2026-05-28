@@ -7,8 +7,9 @@ The focus of this version is transportation workflow only:
 - Victory GSE creates shipment requests.
 - Abby Transport reviews the requests.
 - Abby Transport adds Trip #, carrier, driver, phone, actual pickup, actual delivery, status, and client-facing notes.
-- Victory GSE can mark an edited shipment with **Notify Abby**, which shows a separate **Notice to Abby** badge below the shipment status.
-- Abby Transport can mark an edited shipment with **Notify VictoryGSE**, which shows a separate **Notice to Victory** badge below the shipment status.
+- Each load has a built-in chat between Victory GSE and Abby Transport.
+- The status area shows **Chat** by default and **New Chat** when the other side sends a message.
+- Opening the chat automatically clears the **New Chat** alert for the person who read it.
 - Abby Transport can quickly mark a shipment as picked up or delivered.
 
 No file upload, file links, or billing workflow is included in this version.
@@ -38,8 +39,8 @@ https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026
 Use cache-busting links after uploading a new version:
 
 ```text
-https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=clear1
-https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=clear1
+https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=chat1
+https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=chat1
 ```
 
 ## Firebase
@@ -83,12 +84,12 @@ The active transportation statuses are:
 - Delivered
 - Canceled
 
-Notice badges are not shipment statuses. They are separate communication alerts:
+Chat alerts are not shipment statuses. They are separate communication alerts:
 
-- Notice to Abby
-- Notice to Victory
+- **Chat** means there is no unread message for that side.
+- **New Chat** means the other side sent a new message.
 
-Clicking a notice badge opens a **Yes / No** confirmation. Confirming removes only that visual notice; the written notes remain saved.
+Clicking **Chat** or **New Chat** opens the conversation history for that specific load. Opening the chat automatically clears the unread alert for the person who read it.
 
 ## Admin quick buttons
 

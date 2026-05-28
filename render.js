@@ -13,7 +13,7 @@ export function normalizeStatus(status = "") {
   if (status === "Picked Up") return "Picked Up";
   if (status === "Completed") return "Delivered";
   if (status === "Canceled" || status === "Cancelled") return "Canceled";
-  if (status === "Notice to Abby" || status === "Notice to Victory") return "Submitted";
+  if (String(status || "").toLowerCase().startsWith("notice")) return "Submitted";
   const allowed = ["Submitted", "Assigned", "Picked Up", "In Transit", "Delivered", "Canceled"];
   return allowed.includes(status) ? status : "Submitted";
 }
@@ -104,9 +104,9 @@ export function loadMatches(load, term) {
     load.approvedInitials,
     load.adminNotes,
     load.notes,
-    load.noticeToAbbyNote,
     load.clientUpdateNote,
-    load.status
+    load.status,
+    ...(Array.isArray(load.chatMessages) ? load.chatMessages.map(message => message.text) : [])
   ];
   const haystack = searchableFields.join(" ").toLowerCase();
   return haystack.includes(term.toLowerCase());
@@ -117,23 +117,19 @@ export function statusBadge(status) {
   return `<span class="status-badge ${statusClass(cleanStatus)}">${escapeHtml(cleanStatus)}</span>`;
 }
 
-export function noticeBadges(load = {}, audience = "all") {
-  const badges = [];
-  const showToAbby = audience === "all" || audience === "admin" || audience === "client";
-  const showToVictory = audience === "all" || audience === "client" || audience === "admin";
-  const hasNoticeToAbby = load.noticeToAbby === true || load.noticeToAbby === "true";
-  const hasNoticeToVictory = load.noticeFromAbby === true || load.noticeFromAbby === "true";
 
-  if (showToAbby && hasNoticeToAbby) {
-    badges.push(`<button class="notice-badge notice-to-abby" data-notice-action="clearNoticeToAbby" type="button" title="Click to remove this visual notice after review">Notice to Abby</button>`);
-  }
-
-  if (showToVictory && hasNoticeToVictory) {
-    badges.push(`<button class="notice-badge notice-to-victory" data-notice-action="clearNoticeToVictory" type="button" title="Click to remove this visual notice after review">Notice to Victory</button>`);
-  }
-
-  return badges.length ? `<div class="notice-stack">${badges.join("")}</div>` : "";
+function truthy(value) {
+  return value === true || value === "true";
 }
+
+export function chatButton(load = {}, audience = "client") {
+  const unread = audience === "admin" ? truthy(load.chatUnreadForAdmin) : truthy(load.chatUnreadForClient);
+  const target = audience === "admin" ? "VictoryGSE" : "Abby";
+  const label = unread ? "New Chat" : "Chat";
+  const title = unread ? `New message from ${target}. Open chat.` : `Chat to ${target}`;
+  return `<div class="chat-status-stack"><button class="chat-status-btn ${unread ? "new-chat" : ""}" data-action="openChat" type="button" title="${escapeHtml(title)}">${escapeHtml(label)}</button></div>`;
+}
+
 
 
 export function transportUpdate(load) {
