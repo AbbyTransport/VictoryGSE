@@ -6,7 +6,9 @@ The focus of this version is transportation workflow only:
 
 - Victory GSE creates shipment requests.
 - Abby Transport reviews the requests.
-- Abby Transport adds Trip #, carrier, driver, phone, actual pickup, actual delivery, and status.
+- Abby Transport adds Trip #, carrier, driver, phone, actual pickup, actual delivery, status, and client-facing notes.
+- Victory GSE can mark an edited shipment with **Notify Abby**, which changes the status to **Notice to Abby**.
+- Abby Transport can mark an edited shipment with **Notify VictoryGSE**, which changes the status to **Notice From Abby**.
 - Abby Transport can quickly mark a shipment as picked up or delivered.
 
 No file upload, file links, or billing workflow is included in this version.
@@ -36,8 +38,8 @@ https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026
 Use cache-busting links after uploading a new version:
 
 ```text
-https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=victory1
-https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=victory1
+https://<your-github-username>.github.io/<repository-name>/?key=VS2026&v=notice2
+https://<your-github-username>.github.io/<repository-name>/admin.html?key=VS2026&v=notice2
 ```
 
 ## Firebase
@@ -78,6 +80,8 @@ The active transportation statuses are:
 - Assigned
 - Picked Up
 - In Transit
+- Notice to Abby
+- Notice From Abby
 - Delivered
 - Canceled
 

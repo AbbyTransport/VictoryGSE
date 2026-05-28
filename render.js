@@ -13,12 +13,14 @@ export function normalizeStatus(status = "") {
   if (status === "Picked Up") return "Picked Up";
   if (status === "Completed") return "Delivered";
   if (status === "Canceled" || status === "Cancelled") return "Canceled";
+  if (status === "Notice to Abby" || status === "Notice From Abby") return "Submitted";
   const allowed = ["Submitted", "Assigned", "Picked Up", "In Transit", "Delivered", "Canceled"];
   return allowed.includes(status) ? status : "Submitted";
 }
 
 export function statusClass(status = "") {
-  const s = normalizeStatus(status).toLowerCase();
+  const clean = normalizeStatus(status);
+  const s = clean.toLowerCase();
   if (s.includes("cancel")) return "canceled";
   if (s.includes("deliver")) return "delivered";
   if (s.includes("transit")) return "transit";
@@ -101,6 +103,8 @@ export function loadMatches(load, term) {
     load.customerRate,
     load.approvedInitials,
     load.adminNotes,
+    load.notes,
+    load.noticeToAbbyNote,
     load.clientUpdateNote,
     load.status
   ];
@@ -112,6 +116,26 @@ export function statusBadge(status) {
   const cleanStatus = normalizeStatus(status);
   return `<span class="status-badge ${statusClass(cleanStatus)}">${escapeHtml(cleanStatus)}</span>`;
 }
+
+export function noticeBadges(load = {}, audience = "all") {
+  const badges = [];
+  const showToAbby = audience === "all" || audience === "admin" || audience === "client";
+  const showFromAbby = audience === "all" || audience === "client" || audience === "admin";
+  const rawStatus = String(load.status || "").trim();
+  const hasNoticeToAbby = load.noticeToAbby === true || load.noticeToAbby === "true" || rawStatus === "Notice to Abby";
+  const hasNoticeFromAbby = load.noticeFromAbby === true || load.noticeFromAbby === "true" || rawStatus === "Notice From Abby";
+
+  if (showToAbby && hasNoticeToAbby) {
+    badges.push(`<span class="notice-badge notice-to-abby">Notice to Abby</span>`);
+  }
+
+  if (showFromAbby && hasNoticeFromAbby) {
+    badges.push(`<span class="notice-badge notice-from-abby">Notice From Abby</span>`);
+  }
+
+  return badges.length ? `<div class="notice-stack">${badges.join("")}</div>` : "";
+}
+
 
 export function transportUpdate(load) {
   const status = normalizeStatus(load.status);

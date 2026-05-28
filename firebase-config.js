@@ -1,11 +1,9 @@
-const firebaseProjectId = atob("ZG5sLWFiYnktdHJhbnNwb3J0LXBvcnRhbA==");
-
 export const firebaseConfig = {
-  apiKey: "AIzaSyBm7UsAY4-M-5EpXn_2Vbcdh7kFqYRwaE4",
-  authDomain: `${firebaseProjectId}.firebaseapp.com`,
-  projectId: firebaseProjectId,
-  storageBucket: `${firebaseProjectId}.firebasestorage.app`,
-  messagingSenderId: "975060930514",
-  appId: "1:975060930514:web:17ee73e6720f9a2ec2020b",
-  measurementId: "G-26Z4JLHF4Y"
+  apiKey: "AIzaSyBMl4hke6AqJPGch7Y0lTgOOz1dWRq8HDM",
+  authDomain: "victorygse-abby-portal.firebaseapp.com",
+  projectId: "victorygse-abby-portal",
+  storageBucket: "victorygse-abby-portal.firebasestorage.app",
+  messagingSenderId: "119452755981",
+  appId: "1:119452755981:web:7ff69b37daf5bee90acd44",
+  measurementId: "G-1NYPSBEVGM"
 };

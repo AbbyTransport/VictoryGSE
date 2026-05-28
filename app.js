@@ -1,6 +1,6 @@
-import { createLoad, updateLoad, listenToLoads } from "./firebase-service.js?v=victory1";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, statusRank, transportUpdate, shortText, formatCurrencyDisplay } from "./render.js?v=victory1";
-import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=victory1";
+import { createLoad, updateLoad, listenToLoads } from "./firebase-service.js?v=notice2";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, statusRank, transportUpdate, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=notice2";
+import { CLIENT_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=notice2";
 
 const PAGE_SIZE = 25;
 
@@ -17,7 +17,7 @@ const enableDingBtn = document.querySelector("#enableDingBtn");
 const newShipmentBtn = document.querySelector("#newShipmentBtn");
 const closeFormBtn = document.querySelector("#closeFormBtn");
 const saveShipmentBtn = document.querySelector("#saveShipmentBtn");
-const statusEditField = document.querySelector("#statusEditField");
+const notifyAbbyField = document.querySelector("#notifyAbbyField");
 const metricTotalSubmitted = document.querySelector("#metricTotalSubmitted");
 const metricInTransit = document.querySelector("#metricInTransit");
 let currentLoads = [];
@@ -29,6 +29,7 @@ const DING_STORAGE_KEY = "abbyTransportClientDingOn";
 const SOUND_STATE = { armed: false, context: null, fallbackAudio: null };
 let firstSnapshotLoaded = false;
 let previousStatusById = new Map();
+let previousAbbyNoticeSignals = new Map();
 
 function makeDingWavDataUri() {
   const sampleRate = 44100;
@@ -140,21 +141,36 @@ function toDateInputValue(value) {
   return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
+function abbyNoticeSignal(load) {
+  if (!(load.noticeFromAbby === true || load.noticeFromAbby === "true")) return "";
+  const stamp = load.noticeFromAbbyAt || load.updatedAt || "";
+  return `Notice From Abby:${stamp}`;
+}
+
 function detectClientNotifications(loads) {
   const nextStatus = new Map(loads.map(load => [load.id, normalizeStatus(load.status)]));
+  const nextAbbyNoticeSignals = new Map(loads.map(load => [load.id, abbyNoticeSignal(load)]));
   if (!firstSnapshotLoaded) {
     previousStatusById = nextStatus;
+    previousAbbyNoticeSignals = nextAbbyNoticeSignals;
     firstSnapshotLoaded = true;
     return;
   }
   let changed = false;
   for (const [id, status] of nextStatus.entries()) {
+    const previousNotice = previousAbbyNoticeSignals.get(id) || "";
+    const nextNotice = nextAbbyNoticeSignals.get(id) || "";
     if (previousStatusById.has(id) && previousStatusById.get(id) !== status) {
+      changed = true;
+      break;
+    }
+    if (nextNotice && nextNotice !== previousNotice) {
       changed = true;
       break;
     }
   }
   previousStatusById = nextStatus;
+  previousAbbyNoticeSignals = nextAbbyNoticeSignals;
   if (changed) playComfortDing("status");
 }
 
@@ -167,18 +183,20 @@ function equipmentToText(formElement) {
 
 function formToObject(formElement) {
   const data = Object.fromEntries(new FormData(formElement).entries());
+  const shouldNotifyAbby = formElement.elements.notifyAbby?.checked === true;
+
   delete data.equipmentOptions;
   delete data.equipmentOther;
-
-  if (editingLoadId) {
-    const editingRow = [...list.querySelectorAll("tr[data-id]")].find(row => row.dataset.id === editingLoadId);
-    const noteInput = editingRow?.querySelector(".client-update-note-input");
-    if (noteInput) data.clientUpdateNote = noteInput.value;
-  } else {
-    delete data.clientUpdateNote;
-  }
+  delete data.notifyAbby;
 
   data.equipment = equipmentToText(formElement);
+
+  if (editingLoadId && shouldNotifyAbby) {
+    data.noticeToAbby = true;
+    data.noticeToAbbyAt = Date.now();
+    data.noticeToAbbyNote = data.notes || "";
+  }
+
   return data;
 }
 
@@ -231,10 +249,11 @@ function resetVisibleLimit() {
 function setFormMode(mode = "create") {
   const editing = mode === "edit";
   saveShipmentBtn.textContent = editing ? "Save Changes" : "Save Shipment";
-  message.textContent = editing ? "Editing existing shipment request. You may update the status before saving." : "";
+  message.textContent = editing ? "Editing existing shipment request. Mark Notify Abby when this change needs review." : "";
   message.className = "form-message";
-  if (statusEditField) statusEditField.classList.toggle("hidden-panel", !editing);
-  if (!editing && form.elements.status) form.elements.status.value = "Submitted";
+  if (notifyAbbyField) notifyAbbyField.classList.toggle("hidden-panel", !editing);
+  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
+  resizeAllTextareas();
 }
 
 function openBlankForm() {
@@ -264,7 +283,6 @@ function openEditForm(load) {
     "weight",
     "customerRate",
     "approvedInitials",
-    "status",
     "pickupContactName",
     "pickupContactPhone",
     "deliveryContactName",
@@ -280,6 +298,8 @@ function openEditForm(load) {
     else input.value = load[field] || "";
   }
   setEquipmentControls(load.equipment || "");
+  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
+  resizeAllTextareas();
   renderClientLoads();
 
   form.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -324,6 +344,8 @@ function openDuplicateForm(load) {
   }
 
   setEquipmentControls(load.equipment || "");
+  if (form.elements.notifyAbby) form.elements.notifyAbby.checked = false;
+  resizeAllTextareas();
 
   formPanel.classList.remove("hidden-panel");
   message.textContent = "Duplicated from an existing shipment. Review and click Save Shipment to create a new entry.";
@@ -355,7 +377,7 @@ function clientRow(load) {
        <button class="mini-copy" data-action="copy" type="button">Copy to New Load</button>`;
   return `<tr class="status-row ${status === "Delivered" ? "row-complete" : ""} ${isCanceled ? "row-canceled" : ""}" data-id="${escapeHtml(load.id)}">
     <td class="edit-cell">${editControl}</td>
-    <td>${statusBadge(status)}<div class="progress-line"><span style="width:${progress}%"></span></div></td>
+    <td>${statusBadge(status)}${noticeBadges(load, "client")}<div class="progress-line"><span style="width:${progress}%"></span></div></td>
     <td title="${escapeHtml(load.customerReference || "")}">${escapeHtml(shortText(load.customerReference || "—", 24))}</td>
     <td><strong>${escapeHtml(load.tripNumber || "Pending")}</strong></td>
     <td title="${escapeHtml(load.pickupLocation || "")}"><strong class="history-date-time">${historyDateTime(load.pickupDate, load.pickupTime)}</strong><br>${escapeHtml(shortText(load.pickupLocation, 42))}</td>
@@ -363,18 +385,17 @@ function clientRow(load) {
     <td title="${escapeHtml(load.commodity || "")}">${escapeHtml(shortText(load.commodity, 36))}<br><span class="subcell">${escapeHtml(load.weight || "")}${load.equipment ? ` / ${escapeHtml(load.equipment)}` : ""}</span></td>
     <td><strong>${escapeHtml(formatCurrencyDisplay(load.customerRate) || "—")}</strong><br><span class="subcell">${escapeHtml(load.approvedInitials ? `Approved: ${load.approvedInitials}` : "Approval pending")}</span></td>
     <td title="${escapeHtml(carrierDriver)}">${escapeHtml(shortText(carrierDriver, 40))}</td>
-    <td class="abby-update-cell" title="${escapeHtml(load.clientUpdateNote || "")}">
+    <td class="abby-update-cell" title="${escapeHtml(load.adminNotes || "")}">
       ${clientUpdateNoteBox(load)}
     </td>
   </tr>`;
 }
 
 function clientUpdateNoteBox(load) {
-  const isEditing = editingLoadId === load.id;
-  if (isEditing) {
-    return `<textarea class="client-update-note-input inline-abby-update-note" data-note-input="true" rows="3" placeholder="Type Abby Update note...">${escapeHtml(load.clientUpdateNote || "")}</textarea>`;
-  }
-  return `<div class="client-note-box standalone-abby-note">${escapeHtml(shortText(load.clientUpdateNote || "", 95))}</div>`;
+  const note = load.adminNotes || "";
+  const hasNotice = load.noticeFromAbby === true || load.noticeFromAbby === "true";
+  const label = hasNotice ? `<strong class="note-source-label">Abby Notice</strong>` : `<strong class="note-source-label muted-label">Abby Notes</strong>`;
+  return `<div class="client-note-box standalone-abby-note">${label}<span>${escapeHtml(shortText(note || "No Abby notes yet", 140))}</span></div>`;
 }
 
 function renderClientLoads() {
@@ -423,6 +444,20 @@ form.addEventListener("submit", async event => {
     message.textContent = "Could not save. Check Firebase rules.";
     message.className = "form-message error";
   }
+});
+
+function autoResizeTextarea(textarea) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${Math.max(textarea.scrollHeight, 54)}px`;
+}
+
+function resizeAllTextareas() {
+  document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
+}
+
+form.addEventListener("input", event => {
+  if (event.target.matches("textarea.autoresize")) autoResizeTextarea(event.target);
 });
 
 function formatPhoneTyping(value) {

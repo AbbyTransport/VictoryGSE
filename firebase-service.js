@@ -9,7 +9,7 @@ import {
   onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=victory1";
+import { firebaseConfig } from "./firebase-config.js?v=notice2";
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
@@ -60,6 +60,9 @@ export async function createLoad(payload, profile) {
     actualDeliveryDate: "",
     actualDeliveryTime: "",
     adminNotes: "",
+    noticeToAbby: false,
+    noticeFromAbby: false,
+    noticeToAbbyNote: "",
     createdAt: serverTimestamp(),
     clientCreatedAt: Date.now(),
     updatedAt: serverTimestamp()

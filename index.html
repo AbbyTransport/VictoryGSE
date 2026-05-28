@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=victory1" />
+  <link rel="stylesheet" href="style.css?v=notice2" />
 </head>
 <body class="compact-page client-compact">
   <main class="compact-shell">
@@ -69,16 +69,13 @@
           <label class="field-pu-contact-phone">Pickup Phone<input id="pickupContactPhone" name="pickupContactPhone" class="phone-text" inputmode="numeric" maxlength="14" placeholder="(801) 000-0000" autocomplete="off" /></label>
           <label class="field-del-contact-name">Delivery Contact<input id="deliveryContactName" name="deliveryContactName" placeholder="Contact name" /></label>
           <label class="field-del-contact-phone">Delivery Phone<input id="deliveryContactPhone" name="deliveryContactPhone" class="phone-text" inputmode="numeric" maxlength="14" placeholder="(801) 000-0000" autocomplete="off" /></label>
-          <label id="statusEditField" class="field-status-edit hidden-panel">Status Update
-            <select id="clientStatus" name="status">
-              <option>Submitted</option>
-              <option>Assigned</option>
-              <option>Picked Up</option>
-              <option>In Transit</option>
-              <option>Delivered</option>
-            </select>
+          <label class="field-notes">Notes
+            <textarea id="notes" name="notes" class="notes-textarea autoresize" rows="3" placeholder="Dimensions, appointment, special handling, or change details..."></textarea>
           </label>
-          <label class="field-notes">Notes<input id="notes" name="notes" placeholder="Dimensions, appointment, special handling..." /></label>
+          <label id="notifyAbbyField" class="field-notify-abby notice-check-card hidden-panel">
+            <input id="notifyAbby" name="notifyAbby" type="checkbox" value="yes" />
+            <span><strong>Notify Abby</strong><small>Mark this when your edit needs Abby's attention.</small></span>
+          </label>
           <fieldset class="field-equipment equipment-checks">
             <legend>Equipment</legend>
             <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Flatbed" /> Flatbed</label>
@@ -139,6 +136,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="app.js?v=victory1"></script>
+  <script type="module" src="app.js?v=notice2"></script>
 </body>
 </html>

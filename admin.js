@@ -1,6 +1,6 @@
-import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=victory1";
-import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay } from "./render.js?v=victory1";
-import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=victory1";
+import { listenToLoads, updateLoad, removeLoad } from "./firebase-service.js?v=notice2";
+import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, noticeBadges } from "./render.js?v=notice2";
+import { ADMIN_PROFILE, requireAccess, clearAccess } from "./access-service.js?v=notice2";
 
 const PAGE_SIZE = 25;
 
@@ -20,6 +20,7 @@ const DING_STORAGE_KEY = "abbyTransportAdminDingOn";
 const SOUND_STATE = { armed: false, context: null, fallbackAudio: null };
 let firstSnapshotLoaded = false;
 let knownLoadIds = new Set();
+let knownNoticeSignals = new Map();
 
 function makeDingWavDataUri() {
   const sampleRate = 44100;
@@ -120,22 +121,37 @@ function playComfortDing() {
   }
 }
 
+function notificationSignal(load) {
+  if (!(load.noticeToAbby === true || load.noticeToAbby === "true")) return "";
+  const stamp = load.noticeToAbbyAt || load.updatedAt || load.clientUpdatedAt || "";
+  return `Notice to Abby:${stamp}`;
+}
+
 function detectAdminNotifications(loads) {
   const nextIds = new Set(loads.map(load => load.id));
+  const nextNoticeSignals = new Map(loads.map(load => [load.id, notificationSignal(load)]));
   if (!firstSnapshotLoaded) {
     knownLoadIds = nextIds;
+    knownNoticeSignals = nextNoticeSignals;
     firstSnapshotLoaded = true;
     return;
   }
-  let hasNewLoad = false;
+  let shouldDing = false;
   for (const id of nextIds) {
     if (!knownLoadIds.has(id)) {
-      hasNewLoad = true;
+      shouldDing = true;
+      break;
+    }
+    const previousSignal = knownNoticeSignals.get(id) || "";
+    const nextSignal = nextNoticeSignals.get(id) || "";
+    if (nextSignal && nextSignal !== previousSignal) {
+      shouldDing = true;
       break;
     }
   }
   knownLoadIds = nextIds;
-  if (hasNewLoad) playComfortDing();
+  knownNoticeSignals = nextNoticeSignals;
+  if (shouldDing) playComfortDing();
 }
 
 const STATUS_OPTIONS = ["Submitted", "Assigned", "Picked Up", "In Transit", "Delivered", "Canceled"];
@@ -270,6 +286,7 @@ function adminRow(load, index) {
     <td class="admin-status-cell">
       <select name="status" class="cell-input status-input">${statusOptions(status)}</select>
       ${statusBadge(status)}
+      ${noticeBadges(load, "admin")}
     </td>
     <td class="admin-trip-cell">
       <input name="tripNumber" class="cell-input trip-input" value="${valueAttr(load.tripNumber)}" placeholder="Trip #" />
@@ -303,7 +320,16 @@ function adminRow(load, index) {
       <input name="driverName" class="cell-input stacked-input" value="${valueAttr(load.driverName)}" placeholder="Driver" />
       <input name="driverPhone" class="cell-input phone-input stacked-input" value="${valueAttr(load.driverPhone)}" inputmode="numeric" maxlength="14" placeholder="(801) 000-0000" />
     </td>
-    <td class="admin-notes-cell"><input name="adminNotes" class="cell-input notes-input" value="${valueAttr(load.adminNotes)}" placeholder="Client-facing update" /></td>
+    <td class="admin-notes-cell">
+      <div class="admin-note-editor">
+        <div class="customer-note-preview" title="${escapeHtml(load.notes || load.noticeToAbbyNote || "")}">
+          <strong>Victory Notes</strong>
+          <span>${escapeHtml(shortText(load.notes || load.noticeToAbbyNote || "No customer notes", 110))}</span>
+        </div>
+        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2" placeholder="Notes visible to VictoryGSE">${escapeHtml(load.adminNotes || "")}</textarea>
+        <label class="notify-mini"><input name="notifyVictoryGSE" type="checkbox" value="yes" /> <span>Notify VictoryGSE</span></label>
+      </div>
+    </td>
     <td class="action-cell compact-action-cell">
       <div class="action-grid">
         <button class="mini-save" data-action="save" type="button">Save</button>
@@ -327,14 +353,23 @@ function renderAdminLoads() {
   const shown = Math.min(visible.length, filtered.length);
   showingCount.textContent = `Showing ${shown} of ${filtered.length} shipments`;
   loadMoreBtn.hidden = filtered.length <= visibleLimit;
+  resizeAllTextareas();
 }
 
 function collectRowPayload(row) {
-  const fields = row.querySelectorAll("input[name], select[name]");
-  const payload = Object.fromEntries([...fields].map(field => [field.name, field.value]));
+  const fields = row.querySelectorAll("input[name], select[name], textarea[name]");
+  const payload = Object.fromEntries([...fields].map(field => [field.name, field.type === "checkbox" ? field.checked : field.value]));
   const originalLoad = currentLoads.find(load => load.id === row.dataset.id);
   const originalStatus = normalizeStatus(originalLoad?.status || "Submitted");
   const selectedStatus = normalizeStatus(payload.status || originalStatus);
+  const shouldNotifyVictory = payload.notifyVictoryGSE === true;
+
+  delete payload.notifyVictoryGSE;
+
+  if (shouldNotifyVictory) {
+    payload.noticeFromAbby = true;
+    payload.noticeFromAbbyAt = Date.now();
+  }
 
   // If a carrier is added while the load is still Submitted, move it to Assigned.
   // Picked Up is only set when the Picked Up button/status is used.
@@ -415,6 +450,10 @@ list.addEventListener("click", async event => {
   }
 });
 
+list.addEventListener("input", event => {
+  if (event.target.matches("textarea.autoresize")) autoResizeTextarea(event.target);
+});
+
 list.addEventListener("beforeinput", event => {
   const target = event.target;
   if (target.matches(".currency-input")) {
@@ -456,6 +495,16 @@ loadMoreBtn.addEventListener("click", () => {
   renderAdminLoads();
 });
 logoutBtn.addEventListener("click", () => clearAccess("admin"));
+
+function autoResizeTextarea(textarea) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${Math.max(textarea.scrollHeight, 58)}px`;
+}
+
+function resizeAllTextareas() {
+  document.querySelectorAll("textarea.autoresize").forEach(autoResizeTextarea);
+}
 
 function init() {
   if (!requireAccess("admin")) return;
