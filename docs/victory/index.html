@@ -1,205 +1,139 @@
-    <!doctype html>
-    <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>Victory GSE Freight Portal</title>
-      <link rel="stylesheet" href="../assets/css/style.css" />
-    </head>
-    <body>
-      <section id="loginView" class="login-wrap">
-  <form id="loginForm" class="login-card">
-    <img data-logo class="brand-logo" alt="" />
-    <p class="eyebrow" data-portal-label></p>
-    <h1 data-board-title></h1>
-    <p>Enter your company login and password to access this private freight board.</p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Customer Freight Board | Abby Transport</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=visual2" />
+</head>
+<body class="compact-page client-compact">
+  <main class="compact-shell">
+    <nav class="app-menu">
+      <strong data-board-title>Customer Freight Board</strong>
+      <span>Abby Transport</span>
+      <button id="enableDingBtn" class="menu-ding" type="button">Ding Off</button>
+      <button id="logoutBtn" type="button">Exit</button>
+    </nav>
 
-    <div class="field">
-      <label for="companyLogin">Company Login</label>
-      <input id="companyLogin" name="companyLogin" autocomplete="username" required />
-    </div>
+    <section class="top-strip client-strip brand-strip">
+      <div class="brand-box victory-brand-box">
+        <div class="brand-logo-wrap victory-logo-wrap">
+          <img data-company-logo src="../assets/img/victory-logo.png" alt="Customer logo" class="brand-logo victory-logo" />
+        </div>
+        <div class="brand-caption">
+          <strong data-company-name>Customer</strong>
+          <span data-portal-label>Private customer portal</span>
+        </div>
+      </div>
+      <div class="summary-box two-metric-box">
+        <span>Total Submitted <strong id="metricTotalSubmitted">0</strong></span>
+        <span>In Transit <strong id="metricInTransit">0</strong></span>
+      </div>
+      <div class="brand-box abby-brand-box align-right">
+        <div class="brand-logo-wrap abby-logo-wrap">
+          <img data-abby-logo src="../assets/img/abby-logo.png" alt="Abby Transport logo" class="brand-logo abby-logo" />
+        </div>
+        <div class="brand-caption align-right coordinator-caption">
+          <strong>Abby Transport</strong>
+          <span>Shipment coordinator</span>
+          <small class="coordinator-name" data-coordinator-name>Deron Brunson</small>
+          <small class="coordinator-phone" data-coordinator-phone>(801) 558-9081</small>
+        </div>
+      </div>
+    </section>
 
-    <div class="field">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required />
-    </div>
+    <section class="compact-panel add-panel">
+      <div class="panel-title-row">
+        <div><strong>Add New Shipment</strong><span>Compact line-entry request form</span></div>
+        <button id="newShipmentBtn" class="tiny-primary" type="button">+ Add New Shipment</button>
+      </div>
 
-    <div class="actions">
-      <button class="button primary" type="submit">Sign In</button>
-    </div>
-
-    <div id="loginMessage" class="message hidden"></div>
-  </form>
-</section>
-
-      <section id="appView" class="app-shell hidden">
-        <header class="topbar">
-          <div class="topbar-inner">
-            <div class="brand-lockup">
-              <img data-logo class="brand-logo" alt="" />
-              <div class="brand-copy">
-                <p data-portal-label></p>
-                <strong data-board-title></strong>
-              </div>
-            </div>
-
-            <div class="user-pill">
-              <span id="userLabel">Signed in</span>
-              <button id="signOutButton" class="button ghost">Sign Out</button>
-            </div>
+      <form id="loadForm" class="inline-entry hidden-panel">
+        <div class="inline-grid client-entry-grid">
+          <label class="field-requester">Requested By<input id="requesterName" name="requesterName" placeholder="Name" required /></label>
+          <label class="field-ref">Shipper's No.<input id="customerReference" name="customerReference" placeholder="Shipper's No." /></label>
+          <label class="field-pu-date">PU Date<input id="pickupDate" name="pickupDate" class="date-picker" type="date" required /></label>
+          <label class="field-pu-time">PU Time<input id="pickupTime" name="pickupTime" type="time" step="60" /></label>
+          <label class="field-pickup">Pickup Location<input id="pickupLocation" name="pickupLocation" placeholder="Pickup address" required /></label>
+          <label class="field-del-date">DEL Date<input id="deliveryDate" name="deliveryDate" class="date-picker" type="date" required /></label>
+          <label class="field-del-time">DEL Time<input id="deliveryTime" name="deliveryTime" type="time" step="60" /></label>
+          <label class="field-delivery">Delivery Location<input id="deliveryLocation" name="deliveryLocation" placeholder="Delivery address" required /></label>
+          <label class="field-commodity">Commodity<input id="commodity" name="commodity" placeholder="Commodity" required /></label>
+          <label class="field-weight">Weight<input id="weight" name="weight" placeholder="lbs" /></label>
+          <label class="field-rate"><span data-company-rate-label>Customer Rate</span><input id="customerRate" name="customerRate" class="currency-input" inputmode="numeric" placeholder="$0.00" autocomplete="off" /></label>
+          <label class="field-initials">Approved By<input id="approvedInitials" name="approvedInitials" maxlength="6" placeholder="Initials" /></label>
+          <label class="field-pu-contact-name">Pickup Contact<input id="pickupContactName" name="pickupContactName" placeholder="Contact name" /></label>
+          <label class="field-pu-contact-phone">Pickup Phone<input id="pickupContactPhone" name="pickupContactPhone" class="phone-text" inputmode="numeric" maxlength="14" placeholder="(801) 000-0000" autocomplete="off" /></label>
+          <label class="field-del-contact-name">Delivery Contact<input id="deliveryContactName" name="deliveryContactName" placeholder="Contact name" /></label>
+          <label class="field-del-contact-phone">Delivery Phone<input id="deliveryContactPhone" name="deliveryContactPhone" class="phone-text" inputmode="numeric" maxlength="14" placeholder="(801) 000-0000" autocomplete="off" /></label>
+          <label class="field-notes">Shipment Notes
+            <textarea id="notes" name="notes" class="notes-textarea autoresize" rows="3" placeholder="Dimensions, appointment, special handling, or change details..."></textarea>
+          </label>
+          <fieldset class="field-equipment equipment-checks">
+            <legend>Equipment</legend>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Flatbed" /> Flatbed</label>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Step deck" /> Step deck</label>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Dry van" /> Dry van</label>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Reefer" /> Reefer</label>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="Hotshot" /> Hotshot</label>
+            <label class="check-option"><input type="checkbox" name="equipmentOptions" value="RGN / specialized" /> RGN / specialized</label>
+            <input id="equipmentOther" name="equipmentOther" class="equipment-other" placeholder="Other equipment" />
+          </fieldset>
+          <div class="inline-actions">
+            <button id="saveShipmentBtn" class="tiny-primary" type="submit">Save Shipment</button>
+            <button id="closeFormBtn" class="tiny-btn" type="button">Cancel</button>
           </div>
-        </header>
+        </div>
+        <p id="formMessage" class="form-message"></p>
+      </form>
+    </section>
 
-        <main class="page">
-          <section class="hero">
-            <div class="hero-card">
-              <p class="eyebrow">Submit freight directly to Abby Transport</p>
-              <h1>Customer Load Board</h1>
-              <p>
-                Submit pickup, delivery, equipment, weight, and notes. Abby Transport will review the load
-                and update the status from the central admin portal.
-              </p>
-            </div>
-
-            <div class="metrics">
-              <div class="metric-card"><span>Total Loads</span><strong id="totalLoads">0</strong></div>
-              <div class="metric-card"><span>Open</span><strong id="openLoads">0</strong></div>
-              <div class="metric-card"><span>Booked or Done</span><strong id="bookedLoads">0</strong></div>
-            </div>
-          </section>
-
-          <section class="content-grid">
-            <div class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>New Load Request</h2>
-                  <p>All fields are visible to Abby Admin after submission.</p>
-                </div>
-              </div>
-
-              <form id="loadForm">
-                <div class="form-grid">
-                  <div class="field">
-                    <label>Reference / PO</label>
-                    <input name="referenceNumber" placeholder="Optional" />
-                  </div>
-                  <div class="field">
-                    <label>Contact Name</label>
-                    <input name="contactName" required />
-                  </div>
-                  <div class="field">
-                    <label>Contact Email</label>
-                    <input name="contactEmail" type="email" />
-                  </div>
-                  <div class="field">
-                    <label>Contact Phone</label>
-                    <input name="contactPhone" />
-                  </div>
-                  <div class="field">
-                    <label>Pickup Date</label>
-                    <input name="pickupDate" type="date" />
-                  </div>
-                  <div class="field">
-                    <label>Delivery Date</label>
-                    <input name="deliveryDate" type="date" />
-                  </div>
-                  <div class="field">
-                    <label>Origin City</label>
-                    <input name="originCity" required />
-                  </div>
-                  <div class="field">
-                    <label>Origin State</label>
-                    <input name="originState" maxlength="2" placeholder="UT" required />
-                  </div>
-                  <div class="field">
-                    <label>Destination City</label>
-                    <input name="destinationCity" required />
-                  </div>
-                  <div class="field">
-                    <label>Destination State</label>
-                    <input name="destinationState" maxlength="2" placeholder="CA" required />
-                  </div>
-                  <div class="field">
-                    <label>Equipment Type</label>
-                    <select name="equipmentType" required>
-                      <option value="">Select equipment</option>
-                      <option>Flatbed</option>
-                      <option>Step Deck</option>
-                      <option>RGN</option>
-                      <option>Dry Van</option>
-                      <option>Reefer</option>
-                      <option>Conestoga</option>
-                      <option>Hot Shot</option>
-                      <option>Specialized</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Load Type</label>
-                    <select name="loadType">
-                      <option>Full Truckload</option>
-                      <option>Partial</option>
-                      <option>Oversized</option>
-                      <option>Expedited</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Commodity</label>
-                    <input name="commodity" />
-                  </div>
-                  <div class="field">
-                    <label>Weight</label>
-                    <input name="weight" placeholder="Example: 42,000 lbs" />
-                  </div>
-                  <div class="field full">
-                    <label>Dimensions</label>
-                    <input name="dimensions" placeholder="Example: 48 ft L x 96 in W x 90 in H" />
-                  </div>
-                  <div class="field full">
-                    <label>Notes</label>
-                    <textarea name="notes" placeholder="Pickup instructions, appointment needs, tarping, special handling, etc."></textarea>
-                  </div>
-                </div>
-
-                <div class="actions">
-                  <button class="button primary" type="submit">Submit Load</button>
-                  <button class="button ghost" type="reset">Clear</button>
-                </div>
-
-                <div id="formMessage" class="message hidden"></div>
-              </form>
-            </div>
-
-            <div class="panel">
-              <div class="panel-header">
-                <div>
-                  <h2>Submitted Loads</h2>
-                  <p>You can only see loads connected to your company account.</p>
-                </div>
-              </div>
-
-              <div id="emptyState" class="empty">No loads submitted yet.</div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>Lane</th>
-                      <th>Pickup</th>
-                      <th>Equipment</th>
-                      <th>Weight</th>
-                      <th>Status</th>
-                      <th>Quoted Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody id="loadsBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-        </main>
-      </section>
-
-      <script>window.PORTAL_KEY = "victory";</script>
-      <script type="module" src="../assets/js/client.js"></script>
-    </body>
-    </html>
+    <section class="compact-panel board-panel">
+      <div class="panel-title-row">
+        <div><strong>Shipment History</strong><span>Showing the newest 25 first. Older shipments remain stored in Firebase.</span></div>
+        <div class="filters-row">
+          <input id="clientSearch" class="tiny-search" placeholder="Search Shipper's No., Trip #, pickup, delivery, commodity..." />
+          <select id="clientStatusFilter" class="tiny-search status-select">
+            <option value="">All Statuses</option>
+            <option>Submitted</option>
+            <option>Assigned</option>
+            <option>Picked Up</option>
+            <option>In Transit</option>
+            <option>Delivered</option>
+            <option>Canceled</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="compact-table client-table" aria-label="Victory shipment history">
+          <thead>
+            <tr>
+              <th>Edit</th>
+              <th>Status</th>
+              <th>Shipper's No.</th>
+              <th>Trip #</th>
+              <th>Pickup</th>
+              <th>Delivery</th>
+              <th>Commodity</th>
+              <th>Rate / Approved</th>
+              <th>Carrier / Driver</th>
+              <th>Abby Notes</th>
+            </tr>
+          </thead>
+          <tbody id="clientLoads"></tbody>
+        </table>
+      </div>
+      <div class="load-more-row">
+        <span id="clientShowingCount" class="showing-count">Showing 0 shipments</span>
+        <button id="clientLoadMoreBtn" class="tiny-btn load-more-btn" type="button">Load More / Show Older</button>
+      </div>
+    </section>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>window.PORTAL_KEY = "victory";</script>
+  <script type="module" src="../assets/js/app.js?v=visual2"></script>
+</body>
+</html>

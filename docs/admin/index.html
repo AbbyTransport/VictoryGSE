@@ -3,176 +3,94 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Abby Central Admin Portal</title>
-  <link rel="stylesheet" href="../assets/css/style.css" />
+  <title>Abby Transport Dispatch Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=visual2" />
 </head>
-<body>
-  <section id="loginView" class="login-wrap">
-  <form id="loginForm" class="login-card">
-    <img data-logo class="brand-logo" alt="" />
-    <p class="eyebrow" data-portal-label></p>
-    <h1 data-board-title></h1>
-    <p>Enter your company login and password to access this private freight board.</p>
+<body class="compact-page admin-compact">
+  <main class="compact-shell wide-shell">
+    <nav class="app-menu">
+      <strong>Abby Transport Dispatch Board</strong>
+      <button id="enableDingBtn" class="menu-ding" type="button">Ding Off</button>
+      <button id="logoutBtn" type="button">Exit</button>
+    </nav>
 
-    <div class="field">
-      <label for="companyLogin">Company Login</label>
-      <input id="companyLogin" name="companyLogin" autocomplete="username" required />
-    </div>
-
-    <div class="field">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" required />
-    </div>
-
-    <div class="actions">
-      <button class="button primary" type="submit">Sign In</button>
-    </div>
-
-    <div id="loginMessage" class="message hidden"></div>
-  </form>
-</section>
-
-  <section id="appView" class="app-shell hidden">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="brand-lockup">
-          <img data-logo class="brand-logo" alt="" />
-          <div class="brand-copy">
-            <p data-portal-label></p>
-            <strong data-board-title></strong>
-          </div>
+    <section class="top-strip admin-strip brand-strip admin-brand-strip">
+      <div class="brand-box victory-brand-box admin-victory-box">
+        <div class="brand-logo-wrap victory-logo-wrap">
+          <img src="../assets/img/victory-logo.png" alt="Customer portals" class="brand-logo victory-logo" />
         </div>
-
-        <div class="user-pill">
-          <span id="userLabel">Signed in</span>
-          <button id="signOutButton" class="button ghost">Sign Out</button>
+        <div class="brand-caption">
+          <strong>Customer Portals</strong>
+          <small>Inbound shipment requests from D&amp;L, Victory GSE, Northwest Standard, and future clients.</small>
         </div>
       </div>
-    </header>
-
-    <main class="page">
-      <section class="hero">
-        <div class="hero-card">
-          <p class="eyebrow">Abby Transport Brokerage</p>
-          <h1>Central Admin Portal</h1>
-          <p>
-            Review all customer load requests from D&amp;L, Victory GSE, Northwest Standard, and future customer portals
-            in one centralized board.
-          </p>
-        </div>
-
-        <div class="metrics">
-          <div class="metric-card"><span>Total Loads</span><strong id="totalLoads">0</strong></div>
-          <div class="metric-card"><span>New Loads</span><strong id="newLoads">0</strong></div>
-          <div class="metric-card"><span>Active Companies</span><strong id="activeCompanies">0</strong></div>
-        </div>
-      </section>
-
-      <section class="admin-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>All Customer Loads</h2>
-              <p>Use filters to review activity by company, lane, equipment, status, or reference.</p>
-            </div>
-            <button id="exportButton" class="button dark">Export CSV</button>
-          </div>
-
-          <div class="toolbar">
-            <div class="filter-row">
-              <input id="searchInput" placeholder="Search loads..." />
-              <select id="companyFilter">
-                <option value="">All companies</option>
-                <option value="dnl">D&amp;L</option>
-                <option value="victory">Victory GSE</option>
-                <option value="northwest">Northwest Standard</option>
-              </select>
-              <select id="statusFilter">
-                <option value="">All statuses</option>
-                <option value="new">New</option>
-                <option value="reviewed">Reviewed</option>
-                <option value="quoted">Quoted</option>
-                <option value="booked">Booked</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="emptyState" class="empty">No customer loads yet.</div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Reference</th>
-                  <th>Lane</th>
-                  <th>Pickup</th>
-                  <th>Equipment</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="loadsBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
-  </section>
-
-  <aside id="drawer" class="drawer">
-    <div class="drawer-panel">
-      <div class="drawer-header">
-        <div>
-          <p class="eyebrow">Load details</p>
-          <h2 id="drawerTitle">Load</h2>
-        </div>
-        <button id="closeDrawerButton" class="button ghost">Close</button>
+      <div class="summary-box admin-summary-box">
+        <span>Active Trips <strong id="adminMetricActive">0</strong></span>
+        <span>Delivered <strong id="adminMetricDelivered">0</strong></span>
       </div>
-
-      <div id="drawerSummary"></div>
-
-      <form id="adminForm">
-        <div class="form-grid">
-          <div class="field">
-            <label>Status</label>
-            <select name="status">
-              <option value="new">New</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="quoted">Quoted</option>
-              <option value="booked">Booked</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Quoted Rate</label>
-            <input name="quotedRate" placeholder="$0.00" />
-          </div>
-          <div class="field">
-            <label>Assigned Carrier</label>
-            <input name="assignedCarrier" />
-          </div>
-          <div class="field">
-            <label>Pickup / Confirmation #</label>
-            <input name="pickupNumber" />
-          </div>
-          <div class="field full">
-            <label>Admin Notes</label>
-            <textarea name="adminNotes"></textarea>
-          </div>
+      <div class="brand-box abby-brand-box admin-abby-box align-right">
+        <div class="brand-logo-wrap abby-logo-wrap">
+          <img data-abby-logo src="../assets/img/abby-logo.png" alt="Abby Transport logo" class="brand-logo abby-logo" />
         </div>
-
-        <div class="actions">
-          <button class="button primary" type="submit">Save Update</button>
+        <div class="brand-caption align-right">
+          <strong>Abby Transport</strong>
+          <span>Dispatch board</span>
+          <small>Operational control for carrier, driver and status updates.</small>
         </div>
+      </div>
+    </section>
 
-        <div id="adminMessage" class="message hidden"></div>
-      </form>
-    </div>
-  </aside>
-
-  <script type="module" src="../assets/js/admin.js"></script>
+    <section class="compact-panel board-panel admin-board-panel">
+      <div class="panel-title-row">
+        <div><strong>Shipment Requests</strong><span>Inline editing, compact dispatch view</span></div>
+        <div class="filters-row">
+          <input id="adminSearch" class="tiny-search" placeholder="Search Shipper's No., Trip #, pickup, delivery, commodity..." />
+          <select id="companyFilter" class="tiny-search status-select">
+            <option value="">All Companies</option>
+            <option value="dnl">D&amp;L</option>
+            <option value="victory">Victory GSE</option>
+            <option value="northwest">Northwest Standard</option>
+          </select>
+          <select id="statusFilter" class="tiny-search status-select">
+            <option value="">All Statuses</option>
+            <option>Submitted</option>
+            <option>Assigned</option>
+            <option>Picked Up</option>
+            <option>In Transit</option>
+            <option>Delivered</option>
+            <option>Canceled</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap admin-table-wrap">
+        <table class="compact-table admin-table" aria-label="Abby Transport admin shipment board">
+          <thead>
+            <tr>
+              <th>LN</th>
+              <th>Status</th>
+              <th>Trip #</th>
+              <th>Shipper's No. / Rate</th>
+              <th>Pickup</th>
+              <th>Delivery</th>
+              <th>Commodity</th>
+              <th>Carrier / Driver</th>
+              <th>SHIPMENT NOTES</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminLoads"></tbody>
+        </table>
+      </div>
+      <div class="load-more-row">
+        <span id="adminShowingCount" class="showing-count">Showing 0 shipments</span>
+        <button id="adminLoadMoreBtn" class="tiny-btn load-more-btn" type="button">Load More / Show Older</button>
+      </div>
+    </section>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="../assets/js/admin.js?v=visual2"></script>
 </body>
 </html>

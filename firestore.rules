@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -22,24 +23,60 @@ service cloud.firestore {
       return userProfile().companyId;
     }
 
+    function isOwnClientLoad() {
+      return isClient() && resource.data.companyId == userCompanyId();
+    }
+
+    function clientCreateIsValid() {
+      return isClient()
+        && request.resource.data.companyId == userCompanyId()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "Submitted";
+    }
+
+    function clientUpdateIsValid() {
+      return isOwnClientLoad()
+        && request.resource.data.companyId == resource.data.companyId
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "requesterName",
+          "customerReference",
+          "pickupDate",
+          "pickupTime",
+          "pickupLocation",
+          "deliveryDate",
+          "deliveryTime",
+          "deliveryLocation",
+          "commodity",
+          "weight",
+          "customerRate",
+          "approvedInitials",
+          "pickupContactName",
+          "pickupContactPhone",
+          "deliveryContactName",
+          "deliveryContactPhone",
+          "notes",
+          "equipment",
+          "chatMessages",
+          "chatLastMessageAt",
+          "chatLastSender",
+          "chatUnreadForAdmin",
+          "chatUnreadForClient",
+          "chatReadByClientAt",
+          "updatedAt"
+        ]);
+    }
+
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create, update, delete: if false;
     }
 
     match /loads/{loadId} {
-      allow read: if isAdmin()
-        || (isClient() && resource.data.companyId == userCompanyId());
-
-      allow create: if isAdmin()
-        || (
-          isClient()
-          && request.resource.data.companyId == userCompanyId()
-          && request.resource.data.createdBy == request.auth.uid
-          && request.resource.data.status == "new"
-        );
-
-      allow update, delete: if isAdmin();
+      allow read: if isAdmin() || isOwnClientLoad();
+      allow create: if isAdmin() || clientCreateIsValid();
+      allow update: if isAdmin() || clientUpdateIsValid();
+      allow delete: if isAdmin();
     }
 
     match /{document=**} {

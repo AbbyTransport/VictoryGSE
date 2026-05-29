@@ -1,44 +1,28 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Abby Transport Portal</title>
-  <link rel="stylesheet" href="./assets/css/style.css" />
+  <title>Abby Transport PortalAdmin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=visual2" />
 </head>
-<body class="landing-page">
-  <main class="landing-shell">
-    <section class="landing-card">
-      <img src="./assets/img/abby-logo.svg" class="brand-logo large" alt="Abby Transport" />
-      <p class="eyebrow">Central Freight Portal</p>
-      <h1>Abby Transport Load Management</h1>
-      <p class="lead">
-        Select the correct portal below. Customers can submit and review only their own loads.
-        Abby Admin can review all customer loads in one centralized place.
-      </p>
-
-      <div class="portal-grid">
-        <a class="portal-tile admin" href="./admin/">
-          <span>Admin</span>
-          <strong>Abby Central Admin</strong>
-        </a>
-        <a class="portal-tile" href="./dnl/">
-          <span>Customer</span>
-          <strong>D&amp;L Portal</strong>
-        </a>
-        <a class="portal-tile" href="./victory/">
-          <span>Customer</span>
-          <strong>Victory GSE Portal</strong>
-        </a>
-        <a class="portal-tile" href="./northwest/">
-          <span>Customer</span>
-          <strong>Northwest Standard Portal</strong>
-        </a>
+<body>
+  <main class="portal-home">
+    <section class="portal-home-card">
+      <img src="./assets/img/abby-logo.png" alt="Abby Transport logo" class="brand-logo abby-logo" />
+      <p class="eyebrow">Private Freight System</p>
+      <h1>Abby Transport PortalAdmin</h1>
+      <p>Centralized customer freight portals with the compact Victory-style board, chat, alerts, shipment history, and Abby admin dispatch controls.</p>
+      <div class="portal-home-links">
+        <a href="./admin/"><span>Admin</span>Abby Dispatch Board</a>
+        <a href="./victory/"><span>Customer</span>Victory GSE</a>
+        <a href="./dnl/"><span>Customer</span>D&amp;L</a>
+        <a href="./northwest/"><span>Customer</span>Northwest Standard</a>
       </div>
-
-      <p class="tiny-note">
-        GitHub Pages hosts this interface. Firebase Authentication and Firestore protect the data.
-      </p>
     </section>
   </main>
 </body>
