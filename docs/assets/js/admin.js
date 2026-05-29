@@ -260,6 +260,22 @@ function statusOptions(selected) {
   return STATUS_OPTIONS.map(option => `<option ${status === option ? "selected" : ""}>${option}</option>`).join("");
 }
 
+
+function companyBadge(load) {
+  const companyId = String(load.companyId || "").toLowerCase();
+  const fallbackName = String(load.companyName || companyId || "Client").trim();
+  const companies = {
+    dnl: { label: "D&L", title: "D&L", className: "company-dnl" },
+    victory: { label: "Victory GSE", title: "Victory GSE", className: "company-victory" },
+    northwest: { label: "Northwest Standard", title: "Northwest Standard", className: "company-northwest" }
+  };
+  return companies[companyId] || {
+    label: fallbackName || "Client",
+    title: fallbackName || "Client",
+    className: "company-other"
+  };
+}
+
 function filteredAdminLoads() {
   const term = search.value.trim();
   const status = filter.value;
@@ -285,8 +301,12 @@ function adminRow(load, index) {
         <button class="mini-delivered" data-action="delivered" type="button">Delivered</button>`;
   const pickupContact = [load.pickupContactName || load.pickupContact, load.pickupContactPhone].filter(Boolean).join(" / ");
   const deliveryContact = [load.deliveryContactName || load.deliveryContact, load.deliveryContactPhone].filter(Boolean).join(" / ");
+  const company = companyBadge(load);
   return `<tr class="admin-edit-row ${isCanceled ? "row-canceled" : ""}" data-id="${escapeHtml(load.id)}">
-    <td class="ln-cell">${index + 1}<span class="company-tag">${escapeHtml(load.companyName || load.companyId || "Client")}</span></td>
+    <td class="ln-cell company-ln-cell" title="${escapeHtml(company.title)}">
+      <span class="row-number">${index + 1}</span>
+      <span class="company-tag ${escapeHtml(company.className)}">${escapeHtml(company.label)}</span>
+    </td>
     <td class="admin-status-cell">
       <select name="status" class="cell-input status-input">${statusOptions(status)}</select>
       ${statusBadge(status)}

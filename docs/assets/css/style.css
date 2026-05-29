@@ -2478,3 +2478,169 @@ textarea.cell-input {
 }
 .access-panel .brand-logo { margin: 0 auto; }
 @media (max-width: 850px) { .portal-home-links { grid-template-columns: 1fr; } }
+
+
+/* admin-company-column-fix: cleaner company identity inside the LN column without widening the whole board */
+@media (min-width: 1100px) {
+  .admin-table th:nth-child(1),
+  .admin-table td:nth-child(1) {
+    width: 5.15% !important;
+    min-width: 82px;
+    max-width: 96px;
+    text-align: center;
+  }
+
+  .admin-table th:nth-child(2),
+  .admin-table td:nth-child(2) { width: 8.1% !important; }
+
+  .admin-table th:nth-child(7),
+  .admin-table td:nth-child(7) { width: 8.6% !important; }
+
+  .admin-table th:nth-child(8),
+  .admin-table td:nth-child(8) { width: 10.1% !important; }
+
+  .admin-table th:nth-child(9),
+  .admin-table td:nth-child(9) { width: 17.65% !important; }
+
+  .admin-table th:nth-child(10),
+  .admin-table td:nth-child(10) { width: 6.4% !important; }
+}
+
+.admin-table .ln-cell {
+  padding: 3px 4px !important;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.05;
+}
+
+.admin-table .ln-cell .company-tag {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 86px;
+  margin: 4px auto 0;
+  padding: 2px 4px;
+  border: 1px solid #9fb4d6;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f9fbff 0%, #e9f2ff 100%);
+  color: #064fc8;
+  font-size: 8.4px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-table th:nth-child(1) {
+  font-size: 9px;
+}
+
+@media (max-width: 1099px) {
+  .admin-table .ln-cell .company-tag {
+    max-width: 76px;
+    font-size: 7.8px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+}
+
+/* Admin company badge upgrade - professional visual identification without horizontal scroll */
+.admin-table th:nth-child(1), .admin-table td:nth-child(1) { width: 8%; text-align: center; }
+.admin-table th:nth-child(2), .admin-table td:nth-child(2) { width: 8%; }
+.admin-table th:nth-child(3), .admin-table td:nth-child(3) { width: 6%; }
+.admin-table th:nth-child(4), .admin-table td:nth-child(4) { width: 11%; }
+.admin-table th:nth-child(5), .admin-table td:nth-child(5) { width: 13.5%; }
+.admin-table th:nth-child(6), .admin-table td:nth-child(6) { width: 13.5%; }
+.admin-table th:nth-child(7), .admin-table td:nth-child(7) { width: 11.5%; }
+.admin-table th:nth-child(8), .admin-table td:nth-child(8) { width: 11.5%; }
+.admin-table th:nth-child(9), .admin-table td:nth-child(9) { width: 9.5%; }
+.admin-table th:nth-child(10), .admin-table td:nth-child(10) { width: 7.5%; }
+
+.admin-table .company-ln-cell {
+  padding: 3px 4px;
+  text-align: center;
+  vertical-align: middle;
+  background: #e9eef2 !important;
+}
+
+.admin-table .company-ln-cell .row-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 17px;
+  margin-bottom: 3px;
+  padding: 0 5px;
+  border: 1px solid #9aa7b3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #263140;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.admin-table .company-ln-cell .company-tag {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 4px 5px 3px;
+  border: 1px solid #8fa3b8;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #ffffff 0%, #edf3f8 100%);
+  color: #0f2e52;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+  font-size: 9.2px;
+  font-weight: 950;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.admin-table .company-ln-cell .company-tag.company-victory {
+  border-color: #1d4ed8;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e3a8a;
+}
+
+.admin-table .company-ln-cell .company-tag.company-dnl {
+  border-color: #4b5563;
+  background: linear-gradient(180deg, #f8fafc 0%, #e5e7eb 100%);
+  color: #111827;
+}
+
+.admin-table .company-ln-cell .company-tag.company-northwest {
+  border-color: #15803d;
+  background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #14532d;
+}
+
+.admin-table .company-ln-cell .company-tag.company-other {
+  border-color: #7c3aed;
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+  color: #4c1d95;
+}
+
+.admin-table th:nth-child(1) {
+  font-size: 9px;
+  letter-spacing: .03em;
+}
+
+@media (max-width: 1250px) {
+  .admin-table .company-ln-cell .company-tag {
+    font-size: 8.4px;
+    padding-left: 3px;
+    padding-right: 3px;
+    letter-spacing: -0.035em;
+  }
+}
+
