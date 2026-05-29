@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Customer Portal Login | Abby Transport</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=general-login1" />
+</head>
+<body>
+  <main class="access-gate">
+    <section class="access-panel access-panel-branded">
+      <div class="access-logo-frame">
+        <img src="../assets/img/abby-logo.png" alt="Abby Transport logo" class="access-logo" />
+      </div>
+      <p class="eyebrow">Private Freight System</p>
+      <h1>Customer Portal Login</h1>
+      <p class="muted">Enter your company login and password. Abby Transport will send you to the correct portal automatically.</p>
+
+      <form id="generalLoginForm" class="access-form">
+        <div class="field">
+          <label for="companyLogin">Company Login</label>
+          <input id="companyLogin" name="companyLogin" autocomplete="username" placeholder="Company Login" required />
+        </div>
+        <div class="field">
+          <label for="accessPassword">Password</label>
+          <input id="accessPassword" name="accessPassword" type="password" autocomplete="current-password" placeholder="Password" required />
+        </div>
+        <button class="primary-action full" type="submit">Enter Portal</button>
+        <p id="loginMessage" class="form-message"></p>
+        <p class="access-company-hint">Access is managed by Abby Transport. No public self-registration.</p>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="../assets/js/general-login.js?v=general-login1"></script>
+</body>
+</html>
