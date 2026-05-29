@@ -42,7 +42,7 @@ export const COMPANY_PORTALS = {
     boardTitle: "D&L Freight Board",
     label: "Private customer portal",
     shortName: "D&L",
-    logo: `${imageBase}dnl-logo.svg`,
+    logo: `${imageBase}dnl-logo.png`,
     coordinatorName: "Deron Brunson",
     coordinatorPhone: "(801) 558-9081",
     rateLabel: "D&L Rate"
