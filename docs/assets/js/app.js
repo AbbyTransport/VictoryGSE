@@ -1,5 +1,5 @@
 import { createLoad, updateLoad, listenToLoads, appendChatMessage, markChatRead } from "./firebase-service.js";
-import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton } from "./render.js";
+import { escapeHtml, formatDateOnly, formatTimeDisplay, loadMatches, normalizeStatus, statusBadge, transportUpdate, shortText, formatCurrencyDisplay, chatButton, manualAdminNotes } from "./render.js";
 import { getActiveClientProfile, requireAccess, clearAccess, applyBranding } from "./access-service.js";
 
 const PAGE_SIZE = 25;
@@ -378,8 +378,9 @@ function clientRow(load) {
 }
 
 function clientUpdateNoteBox(load) {
-  const note = load.adminNotes || "";
-  return `<div class="client-note-box standalone-abby-note"><span>${escapeHtml(shortText(note, 140))}</span></div>`;
+  const note = manualAdminNotes(load);
+  const noteText = note ? escapeHtml(shortText(note, 140)) : "";
+  return `<div class="client-note-box standalone-abby-note"><span>${noteText}</span></div>`;
 }
 
 function renderClientLoads() {

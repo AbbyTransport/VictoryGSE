@@ -18,6 +18,37 @@ export function normalizeStatus(status = "") {
   return allowed.includes(status) ? status : "Submitted";
 }
 
+
+const SYSTEM_GENERATED_ADMIN_NOTES = new Set([
+  "request received",
+  "request received.",
+  "carrier assigned",
+  "carrier assigned.",
+  "shipment picked up",
+  "shipment picked up.",
+  "shipment is in transit",
+  "shipment is in transit.",
+  "shipment delivered",
+  "shipment delivered.",
+  "shipment canceled",
+  "shipment canceled.",
+  "shipment cancelled",
+  "shipment cancelled.",
+  "shipment restored",
+  "shipment restored.",
+  "pending abby update",
+  "pending abby update.",
+  "no abby notes yet",
+  "no abby notes yet."
+]);
+
+export function manualAdminNotes(value) {
+  const raw = typeof value === "object" && value !== null ? value.adminNotes : value;
+  const text = String(raw ?? "").trim();
+  if (!text) return "";
+  return SYSTEM_GENERATED_ADMIN_NOTES.has(text.toLowerCase()) ? "" : text;
+}
+
 export function statusClass(status = "") {
   const clean = normalizeStatus(status);
   const s = clean.toLowerCase();
@@ -135,5 +166,5 @@ export function chatButton(load = {}, audience = "client") {
 
 
 export function transportUpdate(load) {
-  return load.adminNotes || "";
+  return manualAdminNotes(load);
 }

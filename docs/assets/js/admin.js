@@ -1,5 +1,5 @@
 import { listenToLoads, updateLoad, removeLoad, appendChatMessage, markChatRead } from "./firebase-service.js";
-import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, chatButton } from "./render.js";
+import { escapeHtml, formatDateTime, formatDateOnly, loadMatches, normalizeStatus, statusBadge, shortText, formatCurrencyDisplay, chatButton, manualAdminNotes } from "./render.js";
 import { ADMIN_PROFILE, requireAccess, clearAccess, applyBranding } from "./access-service.js";
 
 const PAGE_SIZE = 25;
@@ -302,6 +302,7 @@ function adminRow(load, index) {
   const pickupContact = [load.pickupContactName || load.pickupContact, load.pickupContactPhone].filter(Boolean).join(" / ");
   const deliveryContact = [load.deliveryContactName || load.deliveryContact, load.deliveryContactPhone].filter(Boolean).join(" / ");
   const company = companyBadge(load);
+  const visibleAdminNotes = manualAdminNotes(load);
   return `<tr class="admin-edit-row ${isCanceled ? "row-canceled" : ""}" data-id="${escapeHtml(load.id)}">
     <td class="ln-cell company-ln-cell" title="${escapeHtml(company.title)}">
       <span class="row-number">${index + 1}</span>
@@ -347,9 +348,10 @@ function adminRow(load, index) {
     <td class="admin-notes-cell">
       <div class="admin-note-editor">
         <div class="customer-note-preview" title="${escapeHtml(load.notes || "")}">
-          <span>${escapeHtml(shortText(load.notes || "", 110))}</span>
+          <strong>${escapeHtml(load.companyName || "Client")} Notes</strong>
+          <span>${escapeHtml(shortText(load.notes || "No customer notes", 110))}</span>
         </div>
-        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2">${escapeHtml(load.adminNotes || "")}</textarea>
+        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2">${escapeHtml(visibleAdminNotes)}</textarea>
       </div>
     </td>
     <td class="action-cell compact-action-cell">
