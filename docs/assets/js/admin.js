@@ -267,7 +267,7 @@ function companyBadge(load) {
   const companies = {
     dnl: { label: "D&L", title: "D&L", className: "company-dnl" },
     victory: { label: "Victory GSE", title: "Victory GSE", className: "company-victory" },
-    northwest: { label: "Northwest Standard", title: "Northwest Standard", className: "company-northwest" }
+    northwest: { label: "Northwest", title: "Northwest Standard", className: "company-northwest" }
   };
   return companies[companyId] || {
     label: fallbackName || "Client",
