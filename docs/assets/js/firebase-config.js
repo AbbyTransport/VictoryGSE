@@ -2,12 +2,13 @@
 // Firebase Console > Project Settings > General > Your apps > Web app > SDK setup and configuration.
 
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyBMl4hke6AqJPGch7Y0lTgOOz1dWRq8HDM",
+  authDomain: "victorygse-abby-portal.firebaseapp.com",
+  projectId: "victorygse-abby-portal",
+  storageBucket: "victorygse-abby-portal.firebasestorage.app",
+  messagingSenderId: "119452755981",
+  appId: "1:119452755981:web:7ff69b37daf5bee90acd44",
+  measurementId: "G-1NYPSBEVGM"
 };
 
 const imageBase = new URL("../img/", import.meta.url).href;
