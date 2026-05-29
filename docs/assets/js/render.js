@@ -135,12 +135,5 @@ export function chatButton(load = {}, audience = "client") {
 
 
 export function transportUpdate(load) {
-  const status = normalizeStatus(load.status);
-  if (status === "Submitted") return load.adminNotes || "Request received";
-  if (status === "Assigned") return load.adminNotes || "Carrier assigned";
-  if (status === "Picked Up") return load.adminNotes || "Shipment picked up";
-  if (status === "In Transit") return load.adminNotes || "Shipment is in transit";
-  if (status === "Delivered") return load.adminNotes || "Shipment delivered";
-  if (status === "Canceled") return load.adminNotes || "Shipment canceled";
-  return load.adminNotes || "Pending Abby update";
+  return load.adminNotes || "";
 }

@@ -347,10 +347,9 @@ function adminRow(load, index) {
     <td class="admin-notes-cell">
       <div class="admin-note-editor">
         <div class="customer-note-preview" title="${escapeHtml(load.notes || "")}">
-          <strong>${escapeHtml(load.companyName || "Client")} Notes</strong>
-          <span>${escapeHtml(shortText(load.notes || "No customer notes", 110))}</span>
+          <span>${escapeHtml(shortText(load.notes || "", 110))}</span>
         </div>
-        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2" placeholder="Status notes visible to customer">${escapeHtml(load.adminNotes || "")}</textarea>
+        <textarea name="adminNotes" class="cell-input notes-input admin-notes-textarea autoresize" rows="2">${escapeHtml(load.adminNotes || "")}</textarea>
       </div>
     </td>
     <td class="action-cell compact-action-cell">
@@ -391,7 +390,6 @@ function collectRowPayload(row) {
   // Picked Up is only set when the Picked Up button/status is used.
   if (payload.carrier?.trim() && originalStatus === "Submitted" && selectedStatus === "Submitted") {
     payload.status = "Assigned";
-    if (!payload.adminNotes?.trim()) payload.adminNotes = "Carrier assigned.";
   }
 
   return payload;
@@ -401,8 +399,7 @@ async function markPickedUp(id) {
   await updateLoad(id, {
     status: "Picked Up",
     actualPickupDate: todayISO(),
-    actualPickupTime: nowHHMM(),
-    adminNotes: "Shipment picked up."
+    actualPickupTime: nowHHMM()
   });
 }
 
@@ -410,22 +407,19 @@ async function markDelivered(id) {
   await updateLoad(id, {
     status: "Delivered",
     actualDeliveryDate: todayISO(),
-    actualDeliveryTime: nowHHMM(),
-    adminNotes: "Shipment delivered."
+    actualDeliveryTime: nowHHMM()
   });
 }
 
 async function markCanceled(id) {
   await updateLoad(id, {
-    status: "Canceled",
-    adminNotes: "Shipment canceled."
+    status: "Canceled"
   });
 }
 
 async function restoreLoad(id) {
   await updateLoad(id, {
-    status: "Submitted",
-    adminNotes: "Shipment restored."
+    status: "Submitted"
   });
 }
 

@@ -379,8 +379,7 @@ function clientRow(load) {
 
 function clientUpdateNoteBox(load) {
   const note = load.adminNotes || "";
-  const label = `<strong class="note-source-label muted-label">Abby Notes</strong>`;
-  return `<div class="client-note-box standalone-abby-note">${label}<span>${escapeHtml(shortText(note || "No Abby notes yet", 140))}</span></div>`;
+  return `<div class="client-note-box standalone-abby-note"><span>${escapeHtml(shortText(note, 140))}</span></div>`;
 }
 
 function renderClientLoads() {
