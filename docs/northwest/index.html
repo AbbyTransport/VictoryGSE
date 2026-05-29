@@ -1,0 +1,205 @@
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Northwest Standard Freight Portal</title>
+      <link rel="stylesheet" href="../assets/css/style.css" />
+    </head>
+    <body>
+      <section id="loginView" class="login-wrap">
+  <form id="loginForm" class="login-card">
+    <img data-logo class="brand-logo" alt="" />
+    <p class="eyebrow" data-portal-label></p>
+    <h1 data-board-title></h1>
+    <p>Enter your company login and password to access this private freight board.</p>
+
+    <div class="field">
+      <label for="companyLogin">Company Login</label>
+      <input id="companyLogin" name="companyLogin" autocomplete="username" required />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+    </div>
+
+    <div class="actions">
+      <button class="button primary" type="submit">Sign In</button>
+    </div>
+
+    <div id="loginMessage" class="message hidden"></div>
+  </form>
+</section>
+
+      <section id="appView" class="app-shell hidden">
+        <header class="topbar">
+          <div class="topbar-inner">
+            <div class="brand-lockup">
+              <img data-logo class="brand-logo" alt="" />
+              <div class="brand-copy">
+                <p data-portal-label></p>
+                <strong data-board-title></strong>
+              </div>
+            </div>
+
+            <div class="user-pill">
+              <span id="userLabel">Signed in</span>
+              <button id="signOutButton" class="button ghost">Sign Out</button>
+            </div>
+          </div>
+        </header>
+
+        <main class="page">
+          <section class="hero">
+            <div class="hero-card">
+              <p class="eyebrow">Submit freight directly to Abby Transport</p>
+              <h1>Customer Load Board</h1>
+              <p>
+                Submit pickup, delivery, equipment, weight, and notes. Abby Transport will review the load
+                and update the status from the central admin portal.
+              </p>
+            </div>
+
+            <div class="metrics">
+              <div class="metric-card"><span>Total Loads</span><strong id="totalLoads">0</strong></div>
+              <div class="metric-card"><span>Open</span><strong id="openLoads">0</strong></div>
+              <div class="metric-card"><span>Booked or Done</span><strong id="bookedLoads">0</strong></div>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>New Load Request</h2>
+                  <p>All fields are visible to Abby Admin after submission.</p>
+                </div>
+              </div>
+
+              <form id="loadForm">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Reference / PO</label>
+                    <input name="referenceNumber" placeholder="Optional" />
+                  </div>
+                  <div class="field">
+                    <label>Contact Name</label>
+                    <input name="contactName" required />
+                  </div>
+                  <div class="field">
+                    <label>Contact Email</label>
+                    <input name="contactEmail" type="email" />
+                  </div>
+                  <div class="field">
+                    <label>Contact Phone</label>
+                    <input name="contactPhone" />
+                  </div>
+                  <div class="field">
+                    <label>Pickup Date</label>
+                    <input name="pickupDate" type="date" />
+                  </div>
+                  <div class="field">
+                    <label>Delivery Date</label>
+                    <input name="deliveryDate" type="date" />
+                  </div>
+                  <div class="field">
+                    <label>Origin City</label>
+                    <input name="originCity" required />
+                  </div>
+                  <div class="field">
+                    <label>Origin State</label>
+                    <input name="originState" maxlength="2" placeholder="UT" required />
+                  </div>
+                  <div class="field">
+                    <label>Destination City</label>
+                    <input name="destinationCity" required />
+                  </div>
+                  <div class="field">
+                    <label>Destination State</label>
+                    <input name="destinationState" maxlength="2" placeholder="CA" required />
+                  </div>
+                  <div class="field">
+                    <label>Equipment Type</label>
+                    <select name="equipmentType" required>
+                      <option value="">Select equipment</option>
+                      <option>Flatbed</option>
+                      <option>Step Deck</option>
+                      <option>RGN</option>
+                      <option>Dry Van</option>
+                      <option>Reefer</option>
+                      <option>Conestoga</option>
+                      <option>Hot Shot</option>
+                      <option>Specialized</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Load Type</label>
+                    <select name="loadType">
+                      <option>Full Truckload</option>
+                      <option>Partial</option>
+                      <option>Oversized</option>
+                      <option>Expedited</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Commodity</label>
+                    <input name="commodity" />
+                  </div>
+                  <div class="field">
+                    <label>Weight</label>
+                    <input name="weight" placeholder="Example: 42,000 lbs" />
+                  </div>
+                  <div class="field full">
+                    <label>Dimensions</label>
+                    <input name="dimensions" placeholder="Example: 48 ft L x 96 in W x 90 in H" />
+                  </div>
+                  <div class="field full">
+                    <label>Notes</label>
+                    <textarea name="notes" placeholder="Pickup instructions, appointment needs, tarping, special handling, etc."></textarea>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button class="button primary" type="submit">Submit Load</button>
+                  <button class="button ghost" type="reset">Clear</button>
+                </div>
+
+                <div id="formMessage" class="message hidden"></div>
+              </form>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Submitted Loads</h2>
+                  <p>You can only see loads connected to your company account.</p>
+                </div>
+              </div>
+
+              <div id="emptyState" class="empty">No loads submitted yet.</div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Lane</th>
+                      <th>Pickup</th>
+                      <th>Equipment</th>
+                      <th>Weight</th>
+                      <th>Status</th>
+                      <th>Quoted Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="loadsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <script>window.PORTAL_KEY = "northwest";</script>
+      <script type="module" src="../assets/js/client.js"></script>
+    </body>
+    </html>

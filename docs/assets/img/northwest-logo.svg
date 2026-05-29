@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="180" viewBox="0 0 520 180" role="img" aria-label="Northwest">
+  <rect width="520" height="180" rx="28" fill="#ffffff"/>
+  <rect x="24" y="24" width="132" height="132" rx="26" fill="#254f44"/>
+  <path d="M57 113L89 53l35 60H98l-9-17-9 17H57z" fill="#fff"/>
+  <text x="178" y="82" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="800" fill="#152238">Northwest</text>
+  <text x="180" y="118" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="600" fill="#65758b">Standard Freight Portal</text>
+</svg>
